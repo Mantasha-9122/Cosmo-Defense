@@ -1,0 +1,459 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COSMO-DEFENSE | Orbital Intelligence</title>
+
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.146/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.146/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: #030b14;
+    color: #d9edff;
+    font-family: Arial, sans-serif;
+}
+
+header {
+    height: 65px;
+    padding: 22px;
+    background: #091827;
+    border-bottom: 1px solid #16415d;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+main {
+    display: grid;
+    grid-template-columns: 310px 1fr;
+    height: calc(100vh - 65px);
+}
+
+aside {
+    padding: 18px;
+    background: #081522;
+    overflow-y: auto;
+    border-right: 1px solid #16415d;
+}
+
+h3 {
+    color: #22d9ed;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+}
+
+.stat {
+    background: #10283a;
+    padding: 15px;
+    margin: 12px 0;
+    border-radius: 6px;
+}
+
+.stat strong {
+    display: block;
+    font-size: 30px;
+    color: #26d9ed;
+    margin-top: 8px;
+}
+
+.note {
+    font-size: 11px;
+    color: #91a9bb;
+    line-height: 1.7;
+}
+
+#status {
+    color: #ffc66d;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.sat {
+    padding: 8px 5px;
+    border-bottom: 1px solid #193246;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.sat:hover {
+    background: #15334a;
+}
+
+#cesiumContainer {
+    width: 100%;
+    height: 100%;
+}
+
+#details {
+    background: #10283a;
+    padding: 12px;
+    border-radius: 5px;
+    font-size: 12px;
+    line-height: 1.8;
+    display: none;
+}
+
+button {
+    background: #12334a;
+    color: #27d9ed;
+    border: 1px solid #22617d;
+    padding: 9px;
+    cursor: pointer;
+    border-radius: 4px;
+    margin: 3px;
+}
+
+button:hover {
+    background: #20516d;
+}
+
+@media(max-width:700px) {
+    main {
+        grid-template-columns: 1fr;
+        grid-template-rows: 220px 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>COSMO-DEFENSE // ORBITAL INTELLIGENCE</header>
+
+<main>
+
+<aside>
+
+<h3>SYSTEM STATUS</h3>
+<div id="status">INITIALIZING...</div>
+
+<div class="stat">
+TRACKED OBJECTS
+<strong id="count">--</strong>
+</div>
+
+<h3>DATA SOURCE</h3>
+<p class="note">
+CelesTrak public GP orbital elements.
+Positions calculated using Skyfield.
+</p>
+
+<h3>OBJECT CATALOG</h3>
+<div id="satelliteList">Loading...</div>
+
+<h3>SELECTED OBJECT</h3>
+<div id="details">
+Select a satellite from the catalog.
+</div>
+
+<h3>GLOBE CONTROLS</h3>
+<button onclick="resetCamera()">RESET VIEW</button>
+<button onclick="toggleLabels()">TOGGLE LABELS</button>
+
+<p class="note">
+Scroll: Zoom<br>
+Left mouse: Rotate<br>
+Right mouse: Pan<br>
+Click catalog: Select satellite
+</p>
+
+<p class="note">
+Orbital positions are calculated estimates,
+not live radar observations.
+</p>
+
+</aside>
+
+<div id="cesiumContainer"></div>
+
+</main>
+
+<script>
+
+// 1. Create Earth globe
+
+const viewer = new Cesium.Viewer("cesiumContainer", {
+
+    imageryProvider: new Cesium.UrlTemplateImageryProvider({
+        url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        credit: "Esri World Imagery"
+    }),
+
+    baseLayerPicker: false,
+    geocoder: false,
+    homeButton: false,
+    sceneModePicker: false,
+    navigationHelpButton: false,
+    animation: false,
+    timeline: false,
+    fullscreenButton: true,
+    infoBox: true,
+    selectionIndicator: true,
+    shouldAnimate: false
+});
+
+// 2. Earth appearance
+
+viewer.scene.globe.show = true;
+viewer.scene.globe.enableLighting = false;
+viewer.scene.globe.showGroundAtmosphere = true;
+viewer.scene.skyAtmosphere.show = true;
+viewer.scene.backgroundColor =
+    Cesium.Color.fromCssColorString("#020713");
+
+viewer.scene.globe.maximumScreenSpaceError = 2;
+
+// 3. Manual camera
+
+viewer.scene.screenSpaceCameraController.enableZoom = true;
+viewer.scene.screenSpaceCameraController.enableRotate = true;
+viewer.scene.screenSpaceCameraController.enableTilt = true;
+
+viewer.scene.screenSpaceCameraController.minimumZoomDistance = 700000;
+viewer.scene.screenSpaceCameraController.maximumZoomDistance = 50000000;
+
+function resetCamera() {
+    viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(
+            78.9629, 20.5937, 23000000
+        ),
+        orientation: {
+            heading: 0,
+            pitch: Cesium.Math.toRadians(-45),
+            roll: 0
+        },
+        duration: 1.5
+    });
+}
+
+resetCamera();
+
+// 4. Satellite entities
+
+const satelliteEntities = new Map();
+let labelsVisible = true;
+
+function toggleLabels() {
+    labelsVisible = !labelsVisible;
+
+    satelliteEntities.forEach(entity => {
+        entity.label.show = labelsVisible;
+    });
+}
+
+// 5. Update satellite data
+
+async function updateSatellites() {
+
+    const status = document.getElementById("status");
+
+    try {
+
+        const response = await fetch("/api/satellites", {
+            cache: "no-store"
+        });
+
+        if (!response.ok) {
+            throw new Error("API HTTP " + response.status);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.error);
+        }
+
+        const activeNames = new Set();
+
+        result.satellites.forEach(sat => {
+
+            activeNames.add(sat.name);
+
+            const position = Cesium.Cartesian3.fromDegrees(
+                sat.longitude,
+                sat.latitude,
+                sat.altitude_km * 1000
+            );
+
+            let entity = satelliteEntities.get(sat.name);
+
+            if (!entity) {
+
+                entity = viewer.entities.add({
+
+                    name: sat.name,
+
+                    position: position,
+
+                    point: {
+                        pixelSize: 9,
+                        color: Cesium.Color.CYAN,
+                        outlineColor: Cesium.Color.WHITE,
+                        outlineWidth: 2,
+                        disableDepthTestDistance:
+                            Number.POSITIVE_INFINITY
+                    },
+
+                    label: {
+                        text: sat.name,
+                        font: "12px Arial",
+                        fillColor: Cesium.Color.WHITE,
+                        outlineColor: Cesium.Color.BLACK,
+                        outlineWidth: 3,
+                        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                        pixelOffset: new Cesium.Cartesian2(10, -10),
+                        show: labelsVisible,
+                        scaleByDistance: new Cesium.NearFarScalar(
+                            1000000, 1, 25000000, 0.3
+                        ),
+                        disableDepthTestDistance:
+                            Number.POSITIVE_INFINITY
+                    }
+                });
+
+                satelliteEntities.set(sat.name, entity);
+
+            } else {
+                entity.position = position;
+            }
+        });
+
+        // Remove stale objects
+
+        for (const [name, entity] of satelliteEntities) {
+            if (!activeNames.has(name)) {
+                viewer.entities.remove(entity);
+                satelliteEntities.delete(name);
+            }
+        }
+
+        document.getElementById("count").textContent =
+            result.count;
+
+        document.getElementById("satelliteList").innerHTML =
+            result.satellites.map(sat => `
+                <div class="sat"
+                onclick="selectSatellite('${encodeURIComponent(sat.name)}')">
+                    <span style="color:#22d9ed">●</span>
+                    ${escapeHTML(sat.name)}
+                </div>
+            `).join("");
+
+        status.textContent =
+            "CONNECTED // CELESTRAK ORBITAL DATA";
+
+    } catch (error) {
+
+        status.textContent = "DATA ERROR: " + error.message;
+        console.error(error);
+    }
+}
+
+// 6. Select satellite
+
+function selectSatellite(encodedName) {
+
+    const name = decodeURIComponent(encodedName);
+    const entity = satelliteEntities.get(name);
+
+    if (!entity) return;
+
+    viewer.selectedEntity = entity;
+
+    const position = entity.position.getValue(
+        Cesium.JulianDate.now()
+    );
+
+    document.getElementById("details").style.display = "block";
+
+    const sat = currentSatellites.find(s => s.name === name);
+
+    if (sat) {
+        document.getElementById("details").innerHTML = `
+            <strong>${escapeHTML(sat.name)}</strong><br>
+            Latitude: ${sat.latitude}°<br>
+            Longitude: ${sat.longitude}°<br>
+            Altitude: ${sat.altitude_km} km<br>
+            Source: CelesTrak GP
+        `;
+    }
+
+    if (position) {
+        viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.add(
+                position,
+                new Cesium.Cartesian3(1500000, 1500000, 1500000),
+                new Cesium.Cartesian3()
+            ),
+            duration: 1.5
+        });
+    }
+}
+
+let currentSatellites = [];
+
+function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, c => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[c]);
+}
+
+// 7. Load and refresh
+
+async function refresh() {
+    await updateSatellites();
+}
+
+const originalUpdate = updateSatellites;
+
+updateSatellites = async function() {
+    await originalUpdate();
+
+    // Refresh selected object details from latest data
+    // when the user selects an object.
+};
+
+async function initialLoad() {
+    try {
+        const response = await fetch("/api/satellites");
+        const data = await response.json();
+        currentSatellites = data.satellites || [];
+    } catch (error) {
+        console.error(error);
+    }
+
+    await updateSatellites();
+}
+
+initialLoad();
+
+setInterval(async () => {
+    try {
+        const response = await fetch("/api/satellites", {
+            cache: "no-store"
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            currentSatellites = data.satellites;
+        }
+    } catch (error) {
+        console.error(error);
+    }
+
+    await updateSatellites();
+}, 15000);
+
+</script>
+
+</body>
+</html>
