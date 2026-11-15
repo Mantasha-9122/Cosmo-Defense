@@ -31,8 +31,34 @@ header {
 main {
     height: calc(100vh - 62px);
     display: grid;
-    grid-template-columns: 270px minmax(0, 1fr) 310px;
+    grid-template-columns: 66px 270px minmax(0, 1fr);
     overflow: hidden;
+}
+
+#featureNav {
+    background: #06111e;
+    border-right: 1px solid #17354c;
+    padding: 12px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    overflow-y: auto;
+}
+.nav-item {
+    width: 100%;
+    min-height: 43px;
+    padding: 6px 3px;
+    font-size: 9px;
+    line-height: 1.25;
+    border-color: transparent;
+    background: transparent;
+    color: #91a9bb;
+}
+.nav-item span { display:block; font-size:17px; margin-bottom:3px; }
+.nav-item.active, .nav-item:hover {
+    color: #27d9ed;
+    background: #102d42;
+    border-color: #1a6682;
 }
 
 aside {
@@ -47,8 +73,36 @@ aside {
 }
 
 #rightPanel {
-    border-left: 1px solid #17354c;
+    position: fixed;
+    z-index: 20;
+    top: 76px;
+    right: 18px;
+    width: min(410px, calc(100vw - 36px));
+    max-height: calc(100vh - 94px);
+    overflow-y: auto;
+    display: none;
+    border: 1px solid #1b536e;
+    border-radius: 9px;
+    box-shadow: 0 16px 48px rgba(0,0,0,.55);
+    background: #091725;
 }
+#rightPanel.open { display: block; }
+.feature-view { display: none; }
+.feature-view.active { display: block; }
+.feature-panel-head {
+    position: sticky;
+    top: -17px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: -17px -17px 12px;
+    padding: 13px 17px;
+    background: #0a1929;
+    border-bottom: 1px solid #17415c;
+}
+.feature-panel-head strong { color: #27d9ed; font-size: 11px; letter-spacing: 1.2px; }
+.feature-panel-head button { padding: 5px 10px; }
 
 h3 {
     font-size: 11px;
@@ -210,15 +264,10 @@ button:hover { background: #174b65; }
 
 @media(max-width:1000px) {
     main {
-        grid-template-columns: 230px minmax(0, 1fr);
+        grid-template-columns: 58px 230px minmax(0, 1fr);
     }
 
-    #rightPanel {
-        grid-column: 1 / -1;
-        border-left: none;
-        border-top: 1px solid #17354c;
-        max-height: 260px;
-    }
+    #rightPanel { grid-column: auto; }
 }
 
 @media(max-width:700px) {
@@ -227,23 +276,33 @@ button:hover { background: #174b65; }
         min-height: calc(100vh - 62px);
         display: grid;
         grid-template-columns: 1fr;
-        grid-template-rows: 220px minmax(480px, 65vh) auto;
+        grid-template-rows: auto 220px minmax(480px, 65vh);
         overflow: visible;
     }
-
-    #leftPanel {
+    #featureNav {
         grid-row: 1;
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+        border-right: none;
+        border-bottom: 1px solid #17354c;
+    }
+    .nav-item { min-width: 76px; }
+    #leftPanel {
+        grid-row: 2;
         border-right: none;
         border-bottom: 1px solid #17354c;
     }
 
     #cesiumContainer {
-        grid-row: 2;
+        grid-row: 3;
     }
 
     #rightPanel {
-        grid-row: 3;
-        max-height: none;
+        top: 118px;
+        right: 10px;
+        width: calc(100vw - 20px);
+        max-height: calc(100vh - 130px);
     }
 }
 </style>
@@ -255,6 +314,19 @@ button:hover { background: #174b65; }
 
 <main>
 
+<nav id="featureNav" aria-label="Dashboard features">
+  <button class="nav-item active" data-target="earthFeature" onclick="navigateFeature('earthFeature', this)"><span>🌍</span>Earth 3D</button>
+  <button class="nav-item" data-target="orbitDataFeature" onclick="navigateFeature('orbitDataFeature', this)"><span>🛰️</span>Orbit Data</button>
+  <button class="nav-item" data-target="classificationFeature" onclick="navigateFeature('classificationFeature', this)"><span>◇</span>Classification</button>
+  <button class="nav-item" data-target="approachFeature" onclick="navigateFeature('approachFeature', this)"><span>◎</span>Close Approach</button>
+  <button class="nav-item" data-target="asteroidFeature" onclick="navigateFeature('asteroidFeature', this)"><span>☄️</span>Asteroids</button>
+  <button class="nav-item" data-target="qualityFeature" onclick="navigateFeature('qualityFeature', this)"><span>✓</span>Data Quality</button>
+  <button class="nav-item" data-target="healthFeature" onclick="navigateFeature('healthFeature', this)"><span>◉</span>Orbital Health</button>
+  <button class="nav-item" data-target="congestionFeature" onclick="navigateFeature('congestionFeature', this)"><span>▦</span>Congestion</button>
+  <button class="nav-item" data-target="intelligenceFeature" onclick="navigateFeature('intelligenceFeature', this)"><span>⌖</span>Earth Intel</button>
+  <button class="nav-item" data-target="historyFeature" onclick="navigateFeature('historyFeature', this)"><span>◷</span>History</button>
+</nav>
+
 <aside id="leftPanel">
 
 <h3>SYSTEM STATUS</h3>
@@ -265,10 +337,10 @@ button:hover { background: #174b65; }
     <strong id="count">0</strong>
 </div>
 
-<h3>EARTH IMAGERY</h3>
+<h3 id="earthFeature">EARTH IMAGERY // 3D GLOBE</h3>
 <div id="imageryStatus">Loading Earth texture...</div>
 
-<h3>OBJECT CATALOG</h3>
+<h3 id="catalogFeature">SATELLITE ORBITAL POSITIONS // OBJECT CATALOG</h3>
 <input id="satelliteSearch" type="text" placeholder="Search name or NORAD ID...">
 <div class="note" id="catalogInfo">Waiting for data...</div>
 <div id="satelliteList"></div>
@@ -298,49 +370,137 @@ Calculated positions, not radar observations.
 
 <div id="cesiumContainer"></div>
 
-<aside id="rightPanel">
+<aside id="rightPanel" aria-live="polite">
+  <div class="feature-panel-head">
+    <strong id="featurePanelTitle">ORBITAL INTELLIGENCE</strong>
+    <button type="button" onclick="closeFeaturePanel()" aria-label="Close feature panel">✕</button>
+  </div>
 
-<h3>OBJECT CLASSIFICATION</h3>
-<div id="categoryStats"></div>
-
-<div class="panel-divider"></div>
-
-<h3>ORBITAL MONITOR</h3>
-
-<div class="screening-box">
-    <div class="screening-state">SCREENING ENGINE: NOT ACTIVE</div>
-    <p class="note">
-        No close-approach alerts are being generated in this build.
-        This avoids displaying unverified or invented warnings.
-    </p>
-</div>
-
-<h3>CLOSE APPROACH MONITOR</h3>
-<div id="approachList" class="alert-empty">
-    Waiting for a validated orbital screening module.
-</div>
-
-<div class="panel-divider"></div>
-
-<h3>ASTEROID TRACKING</h3>
-<div class="screening-box">
-    <div style="color:#c39aff;font-size:11px;font-weight:bold">
-        SEPARATE NEO DATA LAYER
+  <section class="feature-view" id="orbitDataFeature">
+    <h3>SATELLITE ORBITAL DATA</h3>
+    <div class="screening-box">
+      <div class="screening-state">LIVE CATALOGUE DATA</div>
+      <p class="note">The object catalogue on the left contains the tracked objects returned by the current CelesTrak + SATCAT feed. Search by name or NORAD ID, then select an object to inspect its orbital details and mission metadata.</p>
+      <p class="note">Positions are calculated from public orbital elements using Skyfield; they are not live radar observations.</p>
     </div>
+  </section>
+
+  <section class="feature-view" id="classificationFeature">
+    <h3>OBJECT CLASSIFICATION</h3>
+    <div id="categoryStats"></div>
+    <p class="note">Counts update from the current catalogue response. Unclassified objects remain marked Unknown rather than being guessed.</p>
+  </section>
+
+  <section class="feature-view" id="approachFeature">
+    <h3>ORBITAL MONITOR // CLOSE APPROACH</h3>
+    <div class="screening-box">
+      <div class="screening-state">SCREENING ENGINE: NOT ACTIVE</div>
+      <p class="note">No close-approach alerts are being generated in this build. This avoids displaying unverified or invented warnings.</p>
+    </div>
+    <h3>CLOSE APPROACH MONITOR</h3>
+    <div id="approachList" class="alert-empty">Waiting for a validated orbital screening module.</div>
+  </section>
+
+  <section class="feature-view" id="asteroidFeature">
+    <h3>ASTEROID TRACKING</h3>
+    <div class="screening-box">
+      <div style="color:#c39aff;font-size:11px;font-weight:bold">SEPARATE NEO DATA LAYER</div>
+      <p class="note">Asteroids use heliocentric orbits and must not be plotted as ordinary Earth-orbiting satellites. A verified NEO feed is not connected yet.</p>
+      <p class="note">Sample asteroid values are not treated as current observations.</p>
+    </div>
+  </section>
+
+  <section class="feature-view" id="healthFeature">
+    <h3>ORBITAL ENVIRONMENT HEALTH SCORE</h3>
+    <div class="screening-box">
+      <div class="screening-state">SCORE: NOT YET CALCULATED</div>
+      <p class="note">A defensible score requires a documented methodology and validated inputs such as object population, orbital uncertainty and conjunction data. No synthetic score is displayed.</p>
+    </div>
+  </section>
+
+  <section class="feature-view" id="congestionFeature">
+    <h3>ORBITAL CONGESTION MAP</h3>
+    <div class="screening-box">
+      <div class="screening-state">REGIME ANALYSIS: PENDING</div>
+      <p class="note">LEO / MEO / GEO density layers will be derived from validated orbital elements. This build does not yet publish regime-density figures.</p>
+    </div>
+  </section>
+
+  <section class="feature-view" id="intelligenceFeature">
+    <h3>EARTH & ASTEROID INTELLIGENCE</h3>
+    <div class="screening-box">
+      <div class="screening-state">EARTH OBSERVATION: OBJECT CATALOGUE AVAILABLE</div>
+      <p class="note">Satellite catalogue and Earth imagery are available. A verified heliocentric NEO feed is not connected yet; asteroid sample values are not treated as current observations.</p>
+    </div>
+  </section>
+
+  <section class="feature-view" id="historyFeature">
+    <h3>SPACE HISTORY TIMELINE</h3>
+    <div class="screening-box">
+      <div class="screening-state">TIMELINE: NOT CONNECTED</div>
+      <p class="note">Historical launch and mission milestones will appear here after a sourced event dataset is integrated. No unsourced dates or events are shown.</p>
+    </div>
+  </section>
+
+  
+  <section class="feature-view" id="qualityFeature">
+
+    <h3>DATA QUALITY CHECKS</h3>
+
+    <div class="screening-box">
+        <div class="screening-state" id="qualityStatus">
+            WAITING FOR DATA
+        </div>
+
+        <div class="stat">
+            TLE OBJECTS
+            <strong id="qualityTLE">0</strong>
+        </div>
+
+        <div class="stat">
+            METADATA MATCHES
+            <strong id="qualityMatches">0</strong>
+        </div>
+
+        <div class="stat">
+            CALCULATED POSITIONS
+            <strong id="qualityPositions">0</strong>
+        </div>
+
+        <div class="stat">
+            UNMATCHED METADATA
+            <strong id="qualityUnmatched">0</strong>
+        </div>
+
+        <div class="stat">
+            UNKNOWN CLASSIFICATIONS
+            <strong id="qualityUnknown">0</strong>
+        </div>
+
+        <div class="stat">
+            MISSING OWNER METADATA
+            <strong id="qualityMissing">0</strong>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <p class="note">
+            Metadata match percentage:
+            <strong id="qualityPercent">0%</strong>
+        </p>
+
+        <p class="note" id="qualitySources">
+            Waiting for source information...
+        </p>
+    </div>
+
     <p class="note">
-        Asteroids use heliocentric orbits and must not be plotted
-        as ordinary Earth-orbiting satellites. NEO integration
-        will be added separately.
+        These checks describe catalogue matching and position
+        calculation. They do not represent radar accuracy or
+        collision-risk predictions.
     </p>
-</div>
 
-<h3>DATA QUALITY</h3>
-<p class="note">
-    Public orbital elements have uncertainty. Close-approach
-    screening requires time-based 3D orbit propagation and
-    should not be treated as a confirmed collision prediction.
-</p>
-
+</section>
 </aside>
 
 </main>
@@ -517,6 +677,36 @@ function escapeHTML(value) {
     })[c]);
 }
 
+function navigateFeature(targetId, button) {
+    document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
+    if (button) button.classList.add("active");
+
+    const panel = document.getElementById("rightPanel");
+    document.querySelectorAll(".feature-view").forEach(view => view.classList.remove("active"));
+
+    if (targetId === "earthFeature") {
+        panel.classList.remove("open");
+        viewer.camera.flyTo({ destination: Cesium.Cartesian3.fromDegrees(0, 15, 22000000), duration: 0.8 });
+        return;
+    }
+
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    target.classList.add("active");
+    panel.classList.add("open");
+    const title = target.querySelector("h3")?.textContent || "ORBITAL INTELLIGENCE";
+    document.getElementById("featurePanelTitle").textContent = title;
+    panel.scrollTop = 0;
+    if (targetId === "classificationFeature" && typeof renderCategoryStats === "function") renderCategoryStats();
+}
+
+function closeFeaturePanel() {
+    document.getElementById("rightPanel").classList.remove("open");
+    document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
+    const earthButton = document.querySelector('.nav-item[data-target="earthFeature"]');
+    if (earthButton) earthButton.classList.add("active");
+}
+
 function satelliteKey(sat) {
     return String(sat.norad_id || sat.name);
 }
@@ -625,6 +815,44 @@ function renderCategoryStats() {
     ).join("");
 }
 
+function renderDataQuality(data) {
+
+    if (!data) return;
+
+    document.getElementById("qualityStatus").textContent =
+        "DATA QUALITY REPORT UPDATED";
+
+    document.getElementById("qualityTLE").textContent =
+        (data.tle_objects ?? 0).toLocaleString();
+
+    document.getElementById("qualityMatches").textContent =
+        (data.metadata_matches ?? 0).toLocaleString();
+
+    document.getElementById("qualityPositions").textContent =
+        (data.positions_calculated ?? 0).toLocaleString();
+
+    document.getElementById("qualityUnmatched").textContent =
+        (data.metadata_unmatched ?? 0).toLocaleString();
+
+    document.getElementById("qualityUnknown").textContent =
+        (data.unknown_classifications ?? 0).toLocaleString();
+
+    document.getElementById("qualityMissing").textContent =
+        (data.missing_owner_metadata ?? 0).toLocaleString();
+
+    document.getElementById("qualityPercent").textContent =
+        `${data.metadata_match_percent ?? 0}%`;
+
+    const sources = [
+        `Metadata: ${data.metadata_source || "Unavailable"}`,
+        ...Object.entries(data.feed_sources || {}).map(
+            ([group, source]) => `${group}: ${source}`
+        )
+    ];
+
+    document.getElementById("qualitySources").textContent =
+        sources.join(" | ");
+}
 
 // ==========================================
 // 7. OBJECT CATALOG
@@ -783,6 +1011,9 @@ async function updateSatellites() {
 
         renderCategoryStats();
 
+        // Update Data Quality panel
+        renderDataQuality(result.data_quality);
+
         status.textContent =
             `CONNECTED // ${result.source}`;
 
@@ -860,6 +1091,8 @@ function selectSatellite(encodedId) {
         <br><b>Object type:</b> ${escapeHTML(sat.object_type)}
         <br><b>Owner:</b> ${escapeHTML(sat.owner)}
         <br><b>Launch date:</b> ${escapeHTML(sat.launch_date)}
+        <br><b>Launch vehicle:</b> ${escapeHTML(sat.launch_vehicle || "Unavailable in current metadata")}
+        <br><b>Mission / purpose:</b> ${escapeHTML(sat.mission_purpose || "Unavailable in current metadata")}
         <br><b>Operational status:</b>
             ${escapeHTML(sat.operational_status)}
 

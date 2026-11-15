@@ -1,4 +1,3 @@
-
 from flask import Flask, jsonify, send_from_directory
 from skyfield.api import load, EarthSatellite
 from datetime import datetime, timezone, timedelta
@@ -286,8 +285,15 @@ def safe_float(value):
     try:
         if value is None or str(value).strip() == "":
             return None
-        return float(value)
-    except (ValueError, TypeError):
+
+        number = float(value)
+
+        if not math.isfinite(number):
+            return None
+
+        return number
+
+    except (ValueError, TypeError, OverflowError):
         return None
 
 
@@ -328,6 +334,15 @@ def calculate_positions(feeds, metadata):
                     sum(component * component for component in velocity)
                 )
 
+                latitude = point.latitude.degrees
+                longitude = point.longitude.degrees
+                altitude = point.elevation.km
+
+                if not all(math.isfinite(v) for v in (
+                latitude, longitude, altitude, speed_kms
+                )):
+                    continue
+
                 record = metadata.get(norad_id, {})
 
                 category = classify_object(
@@ -345,6 +360,15 @@ def calculate_positions(feeds, metadata):
                     else safe_float(record.get("PERIOD"))
                 )
 
+                latitude = point.latitude.degrees
+                longitude = point.longitude.degrees
+                altitude = point.elevation.km
+
+                if not all(math.isfinite(v) for v in (
+                latitude, longitude, altitude, speed_kms
+                )):
+                    continue
+
                 objects_by_id[norad_id] = {
                     "norad_id": norad_id,
                     "name": name,
@@ -352,12 +376,14 @@ def calculate_positions(feeds, metadata):
                     "object_type": record.get("OBJECT_TYPE", "UNK"),
                     "owner": record.get("OWNER") or "Unknown",
                     "launch_date": record.get("LAUNCH_DATE") or "Unknown",
+                    "launch_vehicle": record.get("LAUNCH_VEHICLE") or None,
+                    "mission_purpose": record.get("MISSION") or record.get("PAYLOAD_DESC") or None,
                     "operational_status": (
                         record.get("OPS_STATUS_CODE") or "Unknown"
                     ),
-                    "latitude": round(point.latitude.degrees, 4),
-                    "longitude": round(point.longitude.degrees, 4),
-                    "altitude_km": round(point.elevation.km, 2),
+                    "latitude": round(latitude, 4),
+                    "longitude": round(longitude, 4),
+                    "altitude_km": round(altitude, 2),
                     "speed_kms": round(speed_kms, 3),
                     "inclination_deg": (
                         round(inclination, 3)
@@ -415,47 +441,79 @@ def satellites():
 
         metadata, metadata_source = get_satcat_metadata()
 
-        tle_ids = set()
-
-        for group, lines in feeds.items():
-            for name, line1, line2 in parse_tle_blocks(lines):
-                tle_ids.add(line1[2:7].strip())
-
-        matched_ids = tle_ids.intersection(metadata.keys())
+                # DATA QUALITY DIAGNOSTICS
 
         tle_ids = set()
 
         for group, lines in feeds.items():
             for name, line1, line2 in parse_tle_blocks(lines):
-                tle_ids.add(line1[2:7].strip())
+                norad_id = line1[2:7].strip()
+
+                if norad_id:
+                    tle_ids.add(norad_id)
 
         matched_ids = tle_ids.intersection(metadata.keys())
+        unmatched_ids = tle_ids - matched_ids
 
         matched_records = [
-        metadata[x] for x in matched_ids
+            metadata[norad_id]
+            for norad_id in matched_ids
         ]
 
         type_counts = {}
 
         for record in matched_records:
-            obj_type = record.get("OBJECT_TYPE", "EMPTY").strip()
-            if not obj_type:
-                obj_type = "EMPTY"
+            obj_type = record.get("OBJECT_TYPE", "").strip() or "EMPTY"
 
-            type_counts[obj_type] = type_counts.get(obj_type, 0) + 1
-
-        print("SATCAT OBJECT_TYPE DISTRIBUTION:", type_counts)
+            type_counts[obj_type] = (
+                type_counts.get(obj_type, 0) + 1
+            )
 
         print("\n========== SATCAT DIAGNOSTICS ==========")
         print("Metadata source:", metadata_source)
         print("SATCAT records:", len(metadata))
         print("TLE unique IDs:", len(tle_ids))
         print("Matched IDs:", len(matched_ids))
-        print("Sample TLE ID:", next(iter(tle_ids), "None"))
-        print("Sample SATCAT record:", next(iter(metadata.items()), "None"))
+        print("Unmatched IDs:", len(unmatched_ids))
+        print("OBJECT TYPE DISTRIBUTION:", type_counts)
         print("========================================\n")
 
         objects = calculate_positions(feeds, metadata)
+
+                # POSITION AND CLASSIFICATION QUALITY
+
+        calculated_ids = {
+            obj["norad_id"] for obj in objects
+        }
+
+        unknown_count = sum(
+            1 for obj in objects
+            if obj["category"] == "unknown"
+        )
+
+        missing_metadata_count = sum(
+            1 for obj in objects
+            if obj["owner"] == "Unknown"
+        )
+
+        invalid_position_count = len(tle_ids) - len(calculated_ids)
+
+        data_quality = {
+            "tle_objects": len(tle_ids),
+            "metadata_matches": len(matched_ids),
+            "metadata_unmatched": len(unmatched_ids),
+            "positions_calculated": len(calculated_ids),
+            "positions_not_calculated": max(
+                0, invalid_position_count
+            ),
+            "unknown_classifications": unknown_count,
+            "missing_owner_metadata": missing_metadata_count,
+            "metadata_match_percent": round(
+                len(matched_ids) / len(tle_ids) * 100, 2
+            ) if tle_ids else 0,
+            "feed_sources": feed_sources,
+            "metadata_source": metadata_source
+        }
 
         if not objects:
             raise RuntimeError("No orbital positions could be calculated.")
@@ -487,6 +545,7 @@ def satellites():
                 "not live radar observations."
             ),
             "count": len(objects),
+            "data_quality": data_quality,
             "category_counts": category_counts,
             "satellites": objects
         }
