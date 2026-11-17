@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -262,6 +261,17 @@ button:hover { background: #174b65; }
     margin: 15px 0;
 }
 
+#qualityFeature .stat strong { font-size: 24px; }
+.kv { display:flex; justify-content:space-between; gap:10px; padding:6px 2px;
+      border-bottom:1px solid #193246; font-size:11px; color:#9db8ca; }
+.kv b { color:#21d9ed; text-align:right; overflow-wrap:anywhere; }
+.bar-row { font-size:11px; margin:6px 0; color:#9db8ca; }
+.bar-row .bar { height:8px; background:#193246; border-radius:3px; margin-top:3px; }
+.bar-row .bar i { display:block; height:100%; background:#27d9ed; border-radius:3px; }
+.state-unavailable { color:#ffc66d; font-weight:bold; font-size:11px; letter-spacing:1px; }
+.state-error { color:#ff6b7f; font-weight:bold; font-size:11px; letter-spacing:1px; }
+.fail-list { font-size:10px; line-height:1.6; color:#c8d9e6; overflow-wrap:anywhere; }
+
 @media(max-width:1000px) {
     main {
         grid-template-columns: 58px 230px minmax(0, 1fr);
@@ -316,9 +326,7 @@ button:hover { background: #174b65; }
 
 <nav id="featureNav" aria-label="Dashboard features">
   <button class="nav-item active" data-target="earthFeature" onclick="navigateFeature('earthFeature', this)"><span>🌍</span>Earth 3D</button>
-  <button class="nav-item" data-target="orbitDataFeature" onclick="navigateFeature('orbitDataFeature', this)"><span>🛰️</span>Orbit Data</button>
   <button class="nav-item" data-target="classificationFeature" onclick="navigateFeature('classificationFeature', this)"><span>◇</span>Classification</button>
-  <button class="nav-item" data-target="approachFeature" onclick="navigateFeature('approachFeature', this)"><span>◎</span>Close Approach</button>
   <button class="nav-item" data-target="asteroidFeature" onclick="navigateFeature('asteroidFeature', this)"><span>☄️</span>Asteroids</button>
   <button class="nav-item" data-target="qualityFeature" onclick="navigateFeature('qualityFeature', this)"><span>✓</span>Data Quality</button>
   <button class="nav-item" data-target="healthFeature" onclick="navigateFeature('healthFeature', this)"><span>◉</span>Orbital Health</button>
@@ -349,18 +357,21 @@ button:hover { background: #174b65; }
 <div id="details">Select an object on the globe or in the catalog.</div>
 
 <h3>CAMERA CONTROLS</h3>
-<button onclick="resetCamera()">RESET VIEW</button>
+<div style="display:flex; gap:6px; flex-wrap:wrap;">
+  <button onclick="resetCamera()">EARTH VIEW</button>
+  <button onclick="focusSunAndAsteroids()">☀️ SUN + ASTEROIDS</button>
+</div>
 
 <p class="note">
 Mouse wheel: Manual zoom<br>
-Left drag: Rotate Earth<br>
+Left drag: Rotate Earth / Sun<br>
 Right drag: Pan<br>
 Click object: View details
 </p>
 
 <h3>DATA INFORMATION</h3>
-<p class="note">
-Source: CelesTrak GP + SATCAT<br>
+<p class="note" id="dataSourceInfo">
+Source: waiting for first response...<br>
 Position calculation: Skyfield<br>
 Refresh interval: 20 seconds<br>
 Calculated positions, not radar observations.
@@ -376,73 +387,37 @@ Calculated positions, not radar observations.
     <button type="button" onclick="closeFeaturePanel()" aria-label="Close feature panel">✕</button>
   </div>
 
-  <section class="feature-view" id="orbitDataFeature">
-    <h3>SATELLITE ORBITAL DATA</h3>
-    <div class="screening-box">
-      <div class="screening-state">LIVE CATALOGUE DATA</div>
-      <p class="note">The object catalogue on the left contains the tracked objects returned by the current CelesTrak + SATCAT feed. Search by name or NORAD ID, then select an object to inspect its orbital details and mission metadata.</p>
-      <p class="note">Positions are calculated from public orbital elements using Skyfield; they are not live radar observations.</p>
-    </div>
-  </section>
-
   <section class="feature-view" id="classificationFeature">
     <h3>OBJECT CLASSIFICATION</h3>
     <div id="categoryStats"></div>
     <p class="note">Counts update from the current catalogue response. Unclassified objects remain marked Unknown rather than being guessed.</p>
   </section>
 
-  <section class="feature-view" id="approachFeature">
-    <h3>ORBITAL MONITOR // CLOSE APPROACH</h3>
-    <div class="screening-box">
-      <div class="screening-state">SCREENING ENGINE: NOT ACTIVE</div>
-      <p class="note">No close-approach alerts are being generated in this build. This avoids displaying unverified or invented warnings.</p>
-    </div>
-    <h3>CLOSE APPROACH MONITOR</h3>
-    <div id="approachList" class="alert-empty">Waiting for a validated orbital screening module.</div>
-  </section>
-
   <section class="feature-view" id="asteroidFeature">
-    <h3>ASTEROID TRACKING</h3>
-    <div class="screening-box">
-      <div style="color:#c39aff;font-size:11px;font-weight:bold">SEPARATE NEO DATA LAYER</div>
-      <p class="note">Asteroids use heliocentric orbits and must not be plotted as ordinary Earth-orbiting satellites. A verified NEO feed is not connected yet.</p>
-      <p class="note">Sample asteroid values are not treated as current observations.</p>
-    </div>
+    <h3>ASTEROID TRACKING (HELIOCENTRIC + SUN)</h3>
+    <div id="asteroidBody" class="alert-empty">Loading asteroid catalog...</div>
   </section>
 
   <section class="feature-view" id="healthFeature">
     <h3>ORBITAL ENVIRONMENT HEALTH SCORE</h3>
-    <div class="screening-box">
-      <div class="screening-state">SCORE: NOT YET CALCULATED</div>
-      <p class="note">A defensible score requires a documented methodology and validated inputs such as object population, orbital uncertainty and conjunction data. No synthetic score is displayed.</p>
-    </div>
+    <div id="healthBody" class="alert-empty">Loading...</div>
   </section>
 
   <section class="feature-view" id="congestionFeature">
     <h3>ORBITAL CONGESTION MAP</h3>
-    <div class="screening-box">
-      <div class="screening-state">REGIME ANALYSIS: PENDING</div>
-      <p class="note">LEO / MEO / GEO density layers will be derived from validated orbital elements. This build does not yet publish regime-density figures.</p>
-    </div>
+    <div id="congestionBody" class="alert-empty">Loading...</div>
   </section>
 
   <section class="feature-view" id="intelligenceFeature">
     <h3>EARTH & ASTEROID INTELLIGENCE</h3>
-    <div class="screening-box">
-      <div class="screening-state">EARTH OBSERVATION: OBJECT CATALOGUE AVAILABLE</div>
-      <p class="note">Satellite catalogue and Earth imagery are available. A verified heliocentric NEO feed is not connected yet; asteroid sample values are not treated as current observations.</p>
-    </div>
+    <div id="intelligenceBody" class="alert-empty">Loading...</div>
   </section>
 
   <section class="feature-view" id="historyFeature">
     <h3>SPACE HISTORY TIMELINE</h3>
-    <div class="screening-box">
-      <div class="screening-state">TIMELINE: NOT CONNECTED</div>
-      <p class="note">Historical launch and mission milestones will appear here after a sourced event dataset is integrated. No unsourced dates or events are shown.</p>
-    </div>
+    <div id="historyBody" class="alert-empty">Loading...</div>
   </section>
 
-  
   <section class="feature-view" id="qualityFeature">
 
     <h3>DATA QUALITY CHECKS</h3>
@@ -484,6 +459,10 @@ Calculated positions, not radar observations.
 
         <div class="panel-divider"></div>
 
+        <div id="qualityDetails"></div>
+
+        <div class="panel-divider"></div>
+
         <p class="note">
             Metadata match percentage:
             <strong id="qualityPercent">0%</strong>
@@ -500,7 +479,7 @@ Calculated positions, not radar observations.
         collision-risk predictions.
     </p>
 
-</section>
+  </section>
 </aside>
 
 </main>
@@ -545,9 +524,26 @@ controller.inertiaSpin = 0;
 controller.inertiaTranslate = 0;
 
 controller.minimumZoomDistance = 700000;
-controller.maximumZoomDistance = 50000000;
+controller.maximumZoomDistance = 500000000;
 
 viewer.clock.shouldAnimate = false;
+
+// Scaled 1 AU = 90,000,000 meters so Sun, Earth, and Asteroid orbits are all clearly visible together
+const VIS_AU_METERS = 90000000;
+
+function getSunVisualPosition() {
+    const now = Cesium.JulianDate.now();
+    const sunInertial = Cesium.Simon1994PlanetaryPositions.computeSunPositionInEarthInertialFrame(now);
+    const icrfToFixed = Cesium.Transforms.computeIcrfToFixedMatrix(now);
+    let sunDir;
+    if (icrfToFixed) {
+        const sunFixed = Cesium.Matrix3.multiplyByVector(icrfToFixed, sunInertial, new Cesium.Cartesian3());
+        sunDir = Cesium.Cartesian3.normalize(sunFixed, new Cesium.Cartesian3());
+    } else {
+        sunDir = Cesium.Cartesian3.normalize(new Cesium.Cartesian3(1, 0.2, 0.1), new Cesium.Cartesian3());
+    }
+    return Cesium.Cartesian3.multiplyByScalar(sunDir, VIS_AU_METERS, new Cesium.Cartesian3());
+}
 
 function resetCamera() {
     viewer.camera.cancelFlight();
@@ -564,6 +560,40 @@ function resetCamera() {
     });
 
     viewer.scene.requestRender();
+}
+
+function focusSunAndAsteroids() {
+    viewer.camera.cancelFlight();
+    const sunPos = getSunVisualPosition();
+    const midPoint = Cesium.Cartesian3.multiplyByScalar(sunPos, 0.55, new Cesium.Cartesian3());
+    const dir = Cesium.Cartesian3.normalize(midPoint, new Cesium.Cartesian3());
+    const up = new Cesium.Cartesian3(0, 0, 1);
+    const side = Cesium.Cartesian3.normalize(Cesium.Cartesian3.cross(dir, up, new Cesium.Cartesian3()), new Cesium.Cartesian3());
+
+    // Position camera above the ecliptic plane so Sun, Earth, and all 25 Asteroid orbits are visible
+    const camPos = Cesium.Cartesian3.add(
+        midPoint,
+        Cesium.Cartesian3.add(
+            Cesium.Cartesian3.multiplyByScalar(up, VIS_AU_METERS * 2.4, new Cesium.Cartesian3()),
+            Cesium.Cartesian3.multiplyByScalar(side, VIS_AU_METERS * 0.9, new Cesium.Cartesian3()),
+            new Cesium.Cartesian3()
+        ),
+        new Cesium.Cartesian3()
+    );
+
+    const lookDir = Cesium.Cartesian3.normalize(
+        Cesium.Cartesian3.subtract(midPoint, camPos, new Cesium.Cartesian3()),
+        new Cesium.Cartesian3()
+    );
+
+    viewer.camera.flyTo({
+        destination: camPos,
+        orientation: {
+            direction: lookDir,
+            up: dir
+        },
+        duration: 1.1
+    });
 }
 
 
@@ -615,8 +645,14 @@ async function loadEarthImagery() {
                 maximumLevel: 19
             });
 
+        esriProvider.errorEvent.addEventListener(function(tileError) {
+            console.warn("Esri imagery tile error:", tileError && tileError.message);
+            display.textContent =
+                "Esri imagery tiles failing (offline?) - base texture only.";
+        });
+
         viewer.imageryLayers.addImageryProvider(esriProvider);
-        display.textContent = "Earth imagery initialized.";
+        display.textContent = "Earth imagery requested (Natural Earth + Esri).";
 
     } catch (error) {
         console.error("Esri imagery error:", error);
@@ -626,7 +662,7 @@ async function loadEarthImagery() {
 
 
 // ==========================================
-// 5. OBJECT SYMBOLS
+// 5. OBJECT, SUN & ASTEROID SYMBOLS
 // ==========================================
 
 const objectBillboards =
@@ -634,9 +670,21 @@ const objectBillboards =
         new Cesium.BillboardCollection()
     );
 
+const asteroidBillboards =
+    viewer.scene.primitives.add(
+        new Cesium.BillboardCollection()
+    );
+
+const asteroidOrbits =
+    viewer.scene.primitives.add(
+        new Cesium.PolylineCollection()
+    );
+
 const objectBillboardMap = new Map();
+const asteroidBillboardMap = new Map();
 
 let currentSatellites = [];
+let currentAsteroids = [];
 let selectedId = null;
 
 const categoryInfo = {
@@ -659,6 +707,11 @@ const categoryInfo = {
         label: "Debris",
         color: "#ff354f",
         symbol: "◆"
+    },
+    asteroid: {
+        label: "Heliocentric Asteroid",
+        color: "#c39aff",
+        symbol: "☄️"
     },
     unknown: {
         label: "Unknown",
@@ -686,8 +739,12 @@ function navigateFeature(targetId, button) {
 
     if (targetId === "earthFeature") {
         panel.classList.remove("open");
-        viewer.camera.flyTo({ destination: Cesium.Cartesian3.fromDegrees(0, 15, 22000000), duration: 0.8 });
+        resetCamera();
         return;
+    }
+
+    if (targetId === "asteroidFeature") {
+        focusSunAndAsteroids();
     }
 
     const target = document.getElementById(targetId);
@@ -698,6 +755,7 @@ function navigateFeature(targetId, button) {
     document.getElementById("featurePanelTitle").textContent = title;
     panel.scrollTop = 0;
     if (targetId === "classificationFeature" && typeof renderCategoryStats === "function") renderCategoryStats();
+    if (featureLoaders[targetId]) loadFeature(targetId);
 }
 
 function closeFeaturePanel() {
@@ -711,7 +769,19 @@ function satelliteKey(sat) {
     return String(sat.norad_id || sat.name);
 }
 
+const symbolImageCache = new Map();
+
 function makeSymbolImage(category, selected = false) {
+    const cacheKey = category + "|" + (selected ? "1" : "0");
+    let image = symbolImageCache.get(cacheKey);
+    if (!image) {
+        image = buildSymbolImage(category, selected);
+        symbolImageCache.set(cacheKey, image);
+    }
+    return image;
+}
+
+function buildSymbolImage(category, selected = false) {
     const info = categoryInfo[category] || categoryInfo.unknown;
 
     const color = selected ? "#fff36b" : info.color;
@@ -725,6 +795,26 @@ function makeSymbolImage(category, selected = false) {
     } else if (category === "rocket_body") {
         shape = `<text x="20" y="29"
             text-anchor="middle" font-size="32">🚀</text>`;
+
+    } else if (category === "asteroid") {
+        shape = `<text x="20" y="29"
+            text-anchor="middle" font-size="30">☄️</text>`;
+
+    } else if (category === "sun") {
+        const sunSvg = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+                <defs>
+                    <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#ffffff"/>
+                        <stop offset="32%" stop-color="#fff176"/>
+                        <stop offset="65%" stop-color="#ff9800" stop-opacity="0.85"/>
+                        <stop offset="100%" stop-color="#ff5722" stop-opacity="0"/>
+                    </radialGradient>
+                </defs>
+                <circle cx="48" cy="48" r="46" fill="url(#sunGlow)"/>
+                <circle cx="48" cy="48" r="20" fill="#fff59d" stroke="#ffb300" stroke-width="2"/>
+            </svg>`;
+        return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(sunSvg);
 
     } else if (category === "station") {
         shape = `<path d="M15 3h10v12h12v10H25v12H15V25H3V15h12z"
@@ -769,6 +859,158 @@ const selectedLabel = viewer.entities.add({
     }
 });
 
+// ==========================================
+// 5b. HELIOCENTRIC KEPLERIAN MATH (SUN + ASTEROIDS)
+// ==========================================
+
+function solveKepler(M_rad, e) {
+    let E = M_rad;
+    for (let iter = 0; iter < 8; iter++) {
+        E = E - (E - e * Math.sin(E) - M_rad) / (1 - e * Math.cos(E));
+    }
+    return E;
+}
+
+function heliocentricOffset(a_au, e, i_deg, om_deg, w_deg, ma_deg) {
+    const deg2rad = Math.PI / 180;
+    const i = (i_deg || 0) * deg2rad;
+    const om = (om_deg || 0) * deg2rad;
+    const w = (w_deg || 0) * deg2rad;
+    const M = ((ma_deg || 0) % 360) * deg2rad;
+
+    const E = solveKepler(M, e || 0);
+    const cosE = Math.cos(E);
+    const sinE = Math.sin(E);
+    const sqrt1e2 = Math.sqrt(Math.max(0, 1 - (e || 0) * (e || 0)));
+
+    // Position in orbital plane (AU)
+    const xOrb = a_au * (cosE - (e || 0));
+    const yOrb = a_au * sqrt1e2 * sinE;
+
+    // Rotate by w, i, om to heliocentric ecliptic coordinates (AU)
+    const cosOm = Math.cos(om), sinOm = Math.sin(om);
+    const cosW = Math.cos(w), sinW = Math.sin(w);
+    const cosI = Math.cos(i), sinI = Math.sin(i);
+
+    const x = (cosOm * cosW - sinOm * sinW * cosI) * xOrb + (-cosOm * sinW - sinOm * cosW * cosI) * yOrb;
+    const y = (sinOm * cosW + cosOm * sinW * cosI) * xOrb + (-sinOm * sinW + cosOm * cosW * cosI) * yOrb;
+    const z = (sinW * sinI) * xOrb + (cosW * sinI) * yOrb;
+
+    return new Cesium.Cartesian3(x * VIS_AU_METERS, y * VIS_AU_METERS, z * VIS_AU_METERS);
+}
+
+function renderSunAndOrbits(asteroids) {
+    asteroidBillboards.removeAll();
+    asteroidOrbits.removeAll();
+    asteroidBillboardMap.clear();
+
+    const sunPos = getSunVisualPosition();
+
+    // 1. Add Glowing Sun
+    asteroidBillboards.add({
+        position: sunPos,
+        image: makeSymbolImage("sun", false),
+        width: 72,
+        height: 72,
+        verticalOrigin: Cesium.VerticalOrigin.CENTER,
+        id: { _isSun: true, name: "SUN (Solar System Center)" }
+    });
+
+    // Sun Label
+    viewer.entities.removeById("sunLabelEntity");
+    viewer.entities.add({
+        id: "sunLabelEntity",
+        position: sunPos,
+        label: {
+            text: "☀️ SUN",
+            font: "bold 13px Arial",
+            fillColor: Cesium.Color.fromCssColorString("#ffe066"),
+            outlineColor: Cesium.Color.BLACK,
+            outlineWidth: 3,
+            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+            pixelOffset: new Cesium.Cartesian2(0, -40)
+        }
+    });
+
+    // 2. Earth Reference Orbit Ring around the Sun (1 AU radius)
+    const earthRingPts = [];
+    const sunDir = Cesium.Cartesian3.normalize(sunPos, new Cesium.Cartesian3());
+    const refUp = Math.abs(sunDir.z) < 0.9 ? new Cesium.Cartesian3(0, 0, 1) : new Cesium.Cartesian3(1, 0, 0);
+    const basisU = Cesium.Cartesian3.normalize(Cesium.Cartesian3.cross(refUp, sunDir, new Cesium.Cartesian3()), new Cesium.Cartesian3());
+    const basisV = Cesium.Cartesian3.cross(sunDir, basisU, new Cesium.Cartesian3());
+
+    for (let deg = 0; deg <= 360; deg += 5) {
+        const rad = (deg * Math.PI) / 180;
+        // At deg = 0, point passes directly through Earth (origin 0,0,0)
+        const p = Cesium.Cartesian3.add(
+            sunPos,
+            Cesium.Cartesian3.add(
+                Cesium.Cartesian3.multiplyByScalar(sunDir, -VIS_AU_METERS * Math.cos(rad), new Cesium.Cartesian3()),
+                Cesium.Cartesian3.multiplyByScalar(basisU, VIS_AU_METERS * Math.sin(rad), new Cesium.Cartesian3()),
+                new Cesium.Cartesian3()
+            ),
+            new Cesium.Cartesian3()
+        );
+        earthRingPts.push(p);
+    }
+    asteroidOrbits.add({
+        positions: earthRingPts,
+        width: 1.5,
+        material: Cesium.Material.fromType("Color", {
+            color: Cesium.Color.fromCssColorString("#27d9ed").withAlpha(0.45)
+        })
+    });
+
+    // 3. Plot all 25 Asteroids + their Heliocentric Elliptical Orbits around the Sun
+    currentAsteroids = asteroids || [];
+    currentAsteroids.forEach((ast, idx) => {
+        const a = ast.semi_major_axis_au || 1.2;
+        const e = Math.min(0.95, ast.eccentricity || 0.2);
+        const inc = ast.inclination_deg || 0;
+        const om = ast.ascending_node_deg || 0;
+        const w = ast.arg_perihelion_deg || 0;
+        const ma = ast.mean_anomaly_deg || (idx * 14.4);
+
+        const offset = heliocentricOffset(a, e, inc, om, w, ma);
+        const position = Cesium.Cartesian3.add(sunPos, offset, new Cesium.Cartesian3());
+        const astId = "AST-" + idx;
+
+        // Draw Asteroid Orbit Path around Sun
+        const orbitPts = [];
+        for (let mDeg = 0; mDeg <= 360; mDeg += 10) {
+            const ptOffset = heliocentricOffset(a, e, inc, om, w, mDeg);
+            orbitPts.push(Cesium.Cartesian3.add(sunPos, ptOffset, new Cesium.Cartesian3()));
+        }
+        asteroidOrbits.add({
+            positions: orbitPts,
+            width: 1.0,
+            material: Cesium.Material.fromType("Color", {
+                color: Cesium.Color.fromCssColorString("#c39aff").withAlpha(0.28)
+            })
+        });
+
+        const astObj = {
+            ...ast,
+            _isAsteroid: true,
+            _astId: astId
+        };
+
+        const billboard = asteroidBillboards.add({
+            position: position,
+            image: makeSymbolImage("asteroid", selectedId === astId),
+            width: selectedId === astId ? 32 : 24,
+            height: selectedId === astId ? 32 : 24,
+            verticalOrigin: Cesium.VerticalOrigin.CENTER,
+            id: astObj
+        });
+
+        asteroidBillboardMap.set(astId, { billboard, astObj, position });
+    });
+
+    renderCategoryStats();
+    viewer.scene.requestRender();
+}
+
 
 // ==========================================
 // 6. CATEGORY COUNTS
@@ -791,6 +1033,8 @@ function renderCategoryStats() {
         counts[category]++;
     });
 
+    counts.asteroid = currentAsteroids.length;
+
     container.innerHTML = Object.entries(categoryInfo).map(
         ([key, info]) => `
             <div class="category-row">
@@ -805,6 +1049,8 @@ function renderCategoryStats() {
                             ? "polygon(50% 0,100% 100%,0 100%)"
                             : key === "debris"
                             ? "polygon(15% 0,85% 0,100% 70%,50% 100%,0 70%)"
+                            : key === "asteroid"
+                            ? "circle(50% at 50% 50%)"
                             : "polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)"
                         }"></span>
                     ${info.label}
@@ -815,43 +1061,392 @@ function renderCategoryStats() {
     ).join("");
 }
 
+function fmtNum(value) {
+    return (typeof value === "number" && Number.isFinite(value))
+        ? value.toLocaleString()
+        : "DATA UNAVAILABLE";
+}
+
+function fmtUnit(value, unit) {
+    return (value === null || value === undefined || value === "")
+        ? "Unavailable"
+        : `${value}${unit}`;
+}
+
+function fmtTime(isoText) {
+    if (!isoText) return "unknown time";
+    const d = new Date(isoText);
+    return Number.isNaN(d.getTime())
+        ? "unknown time"
+        : d.toISOString().replace("T", " ").slice(0, 16) + " UTC";
+}
+
+function fmtAge(minutes) {
+    if (typeof minutes !== "number") return "";
+    if (minutes < 90) return `${Math.round(minutes)} min old`;
+    if (minutes < 2880) return `${(minutes / 60).toFixed(1)} h old`;
+    return `${(minutes / 1440).toFixed(1)} days old`;
+}
+
+function describeSource(info) {
+    if (!info || info.status === "unavailable") {
+        return "UNAVAILABLE" + (info && info.last_error ? ` (${info.last_error})` : "");
+    }
+    const flag = info.status === "local_backup" ? "BACKUP - NOT LIVE: " : "";
+    const epoch = info.tle_epoch_newest
+        ? `; newest TLE epoch ${fmtTime(info.tle_epoch_newest)}` : "";
+    return `${flag}${info.label}, obtained ${fmtTime(info.data_obtained_at)} (${fmtAge(info.age_minutes)})${epoch}`;
+}
+
+function kv(label, value) {
+    return `<div class="kv"><span>${escapeHTML(label)}</span><b>${escapeHTML(value)}</b></div>`;
+}
+
+function barRow(label, value, max) {
+    const width = max > 0 ? Math.max(1, Math.round(value / max * 100)) : 0;
+    return `<div class="bar-row">${escapeHTML(label)}: <b>${value.toLocaleString()}</b>
+        <div class="bar"><i style="width:${value > 0 ? width : 0}%"></i></div></div>`;
+}
+
 function renderDataQuality(data) {
 
     if (!data) return;
 
-    document.getElementById("qualityStatus").textContent =
-        "DATA QUALITY REPORT UPDATED";
+    const consistent = data.counts_consistent !== false;
 
-    document.getElementById("qualityTLE").textContent =
-        (data.tle_objects ?? 0).toLocaleString();
+    const statusEl = document.getElementById("qualityStatus");
+    statusEl.className = "screening-state";
+    statusEl.textContent = consistent
+        ? "DATA QUALITY REPORT UPDATED"
+        : "COUNT MISMATCH: unique objects != calculated + failed";
 
-    document.getElementById("qualityMatches").textContent =
-        (data.metadata_matches ?? 0).toLocaleString();
-
-    document.getElementById("qualityPositions").textContent =
-        (data.positions_calculated ?? 0).toLocaleString();
-
-    document.getElementById("qualityUnmatched").textContent =
-        (data.metadata_unmatched ?? 0).toLocaleString();
-
-    document.getElementById("qualityUnknown").textContent =
-        (data.unknown_classifications ?? 0).toLocaleString();
-
-    document.getElementById("qualityMissing").textContent =
-        (data.missing_owner_metadata ?? 0).toLocaleString();
+    document.getElementById("qualityTLE").textContent = fmtNum(data.tle_objects);
+    document.getElementById("qualityMatches").textContent = fmtNum(data.metadata_matches);
+    document.getElementById("qualityPositions").textContent = fmtNum(data.positions_calculated);
+    document.getElementById("qualityUnmatched").textContent = fmtNum(data.metadata_unmatched);
+    document.getElementById("qualityUnknown").textContent = fmtNum(data.unknown_classifications);
+    document.getElementById("qualityMissing").textContent = fmtNum(data.missing_owner_metadata);
 
     document.getElementById("qualityPercent").textContent =
-        `${data.metadata_match_percent ?? 0}%`;
+        typeof data.metadata_match_percent === "number"
+            ? `${data.metadata_match_percent}%`
+            : "DATA UNAVAILABLE";
 
-    const sources = [
-        `Metadata: ${data.metadata_source || "Unavailable"}`,
-        ...Object.entries(data.feed_sources || {}).map(
-            ([group, source]) => `${group}: ${source}`
-        )
-    ];
+    const failed = data.failed_positions || [];
+    const feedRecords = Object.entries(data.records_by_feed || {})
+        .map(([g, n]) => `${g}: ${n.toLocaleString()}`).join(", ");
 
-    document.getElementById("qualitySources").textContent =
-        sources.join(" | ");
+    document.getElementById("qualityDetails").innerHTML = `
+        ${kv("Raw feed records", fmtNum(data.raw_feed_records))}
+        ${kv("Records per feed", feedRecords || "n/a")}
+        ${kv("Unique objects (NORAD IDs)", fmtNum(data.unique_valid_objects))}
+        ${kv("IDs present in more than one feed", fmtNum(data.duplicate_ids_across_feeds))}
+        ${kv("Malformed TLE records rejected", fmtNum(data.malformed_records_rejected))}
+        ${kv("Positions not calculated", fmtNum(data.positions_not_calculated))}
+        ${kv("Unknown: no metadata record", fmtNum(data.unknown_no_metadata_record))}
+        ${kv("Unknown: SATCAT type is UNK", fmtNum(data.unknown_metadata_type_unk))}
+        ${kv("Owner: no metadata record", fmtNum(data.owner_missing_no_metadata_record))}
+        ${kv("Owner: blank in metadata", fmtNum(data.owner_blank_in_metadata))}
+        ${failed.length ? `<div class="fail-list"><b>Position failures (actual reason):</b><br>${
+            failed.map(f => `${escapeHTML(f.name)} [${escapeHTML(f.norad_id)}]: ${escapeHTML(f.reason)}`).join("<br>")
+        }</div>` : ""}
+    `;
+
+    const feeds = data.feeds || {};
+    const lines = [`Metadata (SATCAT): ${describeSource(data.metadata)}`];
+    Object.entries(feeds).forEach(([group, info]) => {
+        lines.push(`${group}: ${describeSource(info)}`);
+    });
+
+    document.getElementById("qualitySources").innerHTML =
+        lines.map(escapeHTML).join("<br>");
+}
+
+function renderDataQualityError(message) {
+    const statusEl = document.getElementById("qualityStatus");
+    statusEl.className = "state-error";
+    statusEl.textContent = "DATA ERROR: " + message;
+    ["qualityTLE", "qualityMatches", "qualityPositions",
+     "qualityUnmatched", "qualityUnknown", "qualityMissing"]
+        .forEach(id => { document.getElementById(id).textContent = "DATA UNAVAILABLE"; });
+    document.getElementById("qualityPercent").textContent = "DATA UNAVAILABLE";
+    document.getElementById("qualityDetails").innerHTML = "";
+}
+
+
+// ==========================================
+// 6b. API-DRIVEN FEATURE PANELS
+// ==========================================
+
+let lastSatelliteResult = null;
+let cachedAsteroidData = null;
+const featureRequestToken = {};
+
+const featureLoaders = {
+    asteroidFeature:     { url: "/api/asteroids",      body: "asteroidBody",    render: renderAsteroids },
+    healthFeature:       { url: "/api/health",         body: "healthBody",      render: renderHealth },
+    congestionFeature:   { url: "/api/congestion",     body: "congestionBody",  render: renderCongestion },
+    intelligenceFeature: { url: "/api/asteroids",      body: "intelligenceBody", render: renderIntelligence, handlesUnavailable: true },
+    historyFeature:      { url: "/api/history",        body: "historyBody",     render: renderHistory }
+};
+
+function unavailableHTML(json) {
+    return `<div class="screening-box">
+        <div class="state-unavailable">DATA UNAVAILABLE</div>
+        <p class="note">${escapeHTML(json.reason || "No reliable data source is connected.")}</p>
+        ${json.note ? `<p class="note">${escapeHTML(json.note)}</p>` : ""}
+    </div>`;
+}
+
+async function loadFeature(targetId) {
+    const cfg = featureLoaders[targetId];
+    if (!cfg) return;
+
+    const body = document.getElementById(cfg.body);
+    if (!body) return;
+
+    const token = (featureRequestToken[targetId] || 0) + 1;
+    featureRequestToken[targetId] = token;
+
+    if ((targetId === "asteroidFeature" || targetId === "intelligenceFeature") && cachedAsteroidData) {
+        body.className = "";
+        body.innerHTML = cfg.render(cachedAsteroidData);
+        return;
+    }
+
+    body.className = "alert-empty";
+    body.innerHTML = "LOADING...";
+
+    try {
+        const response = await fetch(cfg.url, { cache: "no-store" });
+        const json = await response.json().catch(() => null);
+
+        if (featureRequestToken[targetId] !== token) return;
+
+        if (!response.ok || !json || json.success === false) {
+            throw new Error((json && json.error) || ("HTTP " + response.status));
+        }
+
+        if (cfg.url === "/api/asteroids" && json.available !== false) {
+            cachedAsteroidData = json;
+            renderSunAndOrbits(json.asteroids || []);
+        }
+
+        body.className = "";
+
+        if (json.available === false && !cfg.handlesUnavailable) {
+            body.innerHTML = unavailableHTML(json);
+            return;
+        }
+
+        body.innerHTML = cfg.render(json);
+
+    } catch (error) {
+        if (featureRequestToken[targetId] !== token) return;
+        console.error(targetId + " load error:", error);
+        body.className = "";
+        body.innerHTML = `<div class="state-error">DATA ERROR</div>
+            <p class="note">${escapeHTML(error.message)}</p>
+            <button type="button" onclick="loadFeature('${targetId}')">RETRY</button>`;
+    }
+}
+
+function selectAsteroid(astId) {
+    const entry = asteroidBillboardMap.get(astId);
+    if (!entry) return;
+
+    selectedId = astId;
+
+    for (const [key, billboard] of objectBillboardMap) {
+        const object = currentSatellites.find(item => satelliteKey(item) === key);
+        if (object) {
+            billboard.image = makeSymbolImage(object.category, false);
+            billboard.width = 23;
+            billboard.height = 23;
+        }
+    }
+
+    for (const [key, item] of asteroidBillboardMap) {
+        item.billboard.image = makeSymbolImage("asteroid", key === astId);
+        item.billboard.width = key === astId ? 34 : 24;
+        item.billboard.height = key === astId ? 34 : 24;
+    }
+
+    const ast = entry.astObj;
+    selectedLabel.position = entry.position;
+    selectedLabel.label.text = ast.name || "Asteroid";
+    selectedLabel.label.show = true;
+
+    const moidAu = ast.earth_moid_au;
+    const moidKm = (typeof moidAu === "number")
+        ? Math.round(moidAu * 149597870.7).toLocaleString() + " km"
+        : "Unavailable";
+
+    const details = document.getElementById("details");
+    details.style.display = "block";
+    details.innerHTML = `
+        <strong style="color:#c39aff">☄️ ${escapeHTML(ast.name || "Unnamed Asteroid")}</strong>
+        <br><b>Category:</b> Potentially Hazardous Asteroid (PHA)
+        <br><b>Orbit Type:</b> Heliocentric (Orbits the Sun)
+        <br><b>Earth MOID:</b> ${moidAu === null ? "Unavailable" : moidAu.toFixed(6) + " AU"} (${moidKm})
+        <br><b>Diameter:</b> ${ast.diameter_km === null ? "Not measured" : ast.diameter_km + " km"}
+        <br><b>Abs. Magnitude (H):</b> ${fmtUnit(ast.abs_magnitude_h, "")}
+
+        <div class="panel-divider"></div>
+
+        <b>HELIOCENTRIC ELEMENTS</b>
+        <br>Semi-major Axis: ${fmtUnit(ast.semi_major_axis_au === null ? null : ast.semi_major_axis_au.toFixed(4), " AU")}
+        <br>Eccentricity: ${fmtUnit(ast.eccentricity === null ? null : ast.eccentricity.toFixed(4), "")}
+        <br>Inclination: ${fmtUnit(ast.inclination_deg === null ? null : ast.inclination_deg.toFixed(3), "°")}
+        <br>Ascending Node (Ω): ${fmtUnit(ast.ascending_node_deg === null ? null : ast.ascending_node_deg.toFixed(2), "°")}
+        <br>Arg. Perihelion (ω): ${fmtUnit(ast.arg_perihelion_deg === null ? null : ast.arg_perihelion_deg.toFixed(2), "°")}
+
+        <div class="panel-divider"></div>
+
+        <span class="note">
+            Source: NASA/JPL Small-Body Database<br>
+            Heliocentric orbit plotted around the Sun.
+        </span>
+    `;
+
+    viewer.scene.requestRender();
+}
+
+async function prefetchAsteroids() {
+    try {
+        const response = await fetch("/api/asteroids", { cache: "no-store" });
+        const json = await response.json().catch(() => null);
+        if (response.ok && json && json.success !== false && json.available !== false) {
+            cachedAsteroidData = json;
+            renderSunAndOrbits(json.asteroids || []);
+        }
+    } catch (e) {
+        console.warn("Asteroid prefetch skipped:", e);
+    }
+}
+
+function renderAsteroids(json) {
+    const list = json.asteroids || [];
+    const rows = list.map((a, idx) => {
+        const moidAu = a.earth_moid_au;
+        const moidKm = (typeof moidAu === "number") ? Math.round(moidAu * 149597870.7).toLocaleString() + " km" : "Unavailable";
+        const astId = "AST-" + idx;
+        return `
+        <div class="screening-box" style="cursor:pointer" onclick="selectAsteroid('${astId}')">
+            <strong style="color:#c39aff;font-size:12px;">☄️ ${escapeHTML(a.name || "Unnamed")}</strong>
+            ${kv("Earth MOID (AU)", moidAu === null ? "Unavailable" : moidAu.toFixed(6) + " AU")}
+            ${kv("Earth MOID (km)", moidKm)}
+            ${kv("Semi-major axis", fmtUnit(a.semi_major_axis_au === null ? null : a.semi_major_axis_au.toFixed(4), " AU"))}
+            ${kv("Eccentricity", fmtUnit(a.eccentricity === null ? null : a.eccentricity.toFixed(4), ""))}
+            ${kv("Inclination", fmtUnit(a.inclination_deg === null ? null : a.inclination_deg.toFixed(3), "°"))}
+            ${kv("Abs. magnitude H", fmtUnit(a.abs_magnitude_h, ""))}
+            ${kv("Diameter", a.diameter_km === null ? "Not measured" : a.diameter_km + " km")}
+        </div>`;
+    }).join("");
+
+    return `
+        <div class="screening-box">
+            <div class="screening-state">☀️ HELIOCENTRIC SOLAR SYSTEM LAYER (${list.length} PHAs)</div>
+            ${kv("Source", json.source)}
+            ${kv("Obtained", fmtTime(json.data_obtained_at) + " (" + fmtAge(json.age_minutes) + ")")}
+            ${kv("Orbit type", json.orbit_type)}
+            <p class="note">${escapeHTML(json.selection)}</p>
+            <p class="note">☀️ Sun, Earth's 1 AU orbit (cyan ring), and all 25 Asteroid orbits (purple paths) are rendered in 3D space.</p>
+        </div>${rows}`;
+}
+
+function renderHealth(json) {
+    const m = json.metrics || {};
+    const cats = Object.entries(m.category_counts || {})
+        .map(([k, v]) => `${k}: ${v.toLocaleString()}`).join(", ");
+    return `
+        <div class="screening-box">
+            <div class="screening-state">SCORE: ${escapeHTML(json.score_status)}</div>
+            <p class="note">${escapeHTML(json.score_reason)}</p>
+        </div>
+        <h3>MEASURED METRICS</h3>
+        ${kv("Objects analysed", fmtNum(m.objects_analysed))}
+        ${kv("Categories", cats || "n/a")}
+        ${kv("Objects in LEO", fmtNum(m.leo_objects))}
+        ${kv("LEO share of catalogue", fmtUnit(m.leo_share_of_catalogue_percent, "%"))}
+        ${kv("TLE epoch median age", fmtUnit(m.tle_epoch_median_age_days, " days"))}
+        ${kv("TLE epochs older than 7 days", fmtUnit(m.tle_epoch_older_than_7_days_percent, "%"))}
+        ${kv("Metadata coverage", fmtUnit(m.metadata_coverage_percent, "%"))}
+        <p class="note">${escapeHTML(json.scope_note)}</p>
+        <p class="note">${escapeHTML(json.method)}</p>
+        <p class="note">Generated ${escapeHTML(fmtTime(json.generated_at))}</p>`;
+}
+
+function renderCongestion(json) {
+    const names = {
+        LEO: "LEO (apogee < 2,000 km)", MEO: "MEO", GEO: "GEO belt (35,786 ± 500 km)",
+        ELLIPTICAL: "Elliptical (crosses LEO, e.g. GTO)", OTHER_HIGH: "Other high orbits"
+    };
+    const regimes = json.regimes || {};
+    const max = Math.max(...Object.values(regimes), 1);
+    const bins = json.leo_altitude_bins_100km || [];
+    const binMax = Math.max(...bins.map(b => b.objects), 1);
+
+    return `
+        <div class="screening-box">
+            <div class="screening-state">${fmtNum(json.objects_analysed)} OBJECTS ANALYSED</div>
+        </div>
+        <h3>OBJECTS PER REGIME</h3>
+        ${Object.keys(names).map(k => barRow(names[k], regimes[k] || 0, max)).join("")}
+        <h3>LEO ALTITUDE SHELLS (100 km)</h3>
+        ${bins.map(b => barRow(`${b.from_km}-${b.to_km} km`, b.objects, binMax)).join("")}
+        <p class="note">${escapeHTML(json.method)}</p>
+        <p class="note">Generated ${escapeHTML(fmtTime(json.generated_at))}</p>`;
+}
+
+function renderHistory(json) {
+    const byDecade = {};
+    (json.by_year || []).forEach(y => {
+        const decade = Math.floor(y.year / 10) * 10;
+        byDecade[decade] = (byDecade[decade] || 0) + y.objects;
+    });
+    const max = Math.max(...Object.values(byDecade), 1);
+    const recent = (json.by_year || []).slice(-8).reverse();
+
+    return `
+        <div class="screening-box">
+            <div class="screening-state">${escapeHTML(json.title)}</div>
+            ${kv("Source", "CelesTrak SATCAT - " + (json.metadata ? json.metadata.label : ""))}
+            ${kv("Years covered", json.first_year + " - " + json.last_year)}
+            ${kv("Dated objects", fmtNum(json.total_dated_objects))}
+        </div>
+        <h3>EARLIEST CATALOGUED LAUNCHES</h3>
+        ${(json.earliest_catalogued_launches || []).map(e =>
+            kv(e.launch_date, `${e.name} (${e.object_type || "?"})`)).join("")}
+        <h3>OBJECTS BY DECADE</h3>
+        ${Object.keys(byDecade).sort().map(d => barRow(d + "s", byDecade[d], max)).join("")}
+        <h3>MOST RECENT YEARS</h3>
+        ${recent.map(y => kv(String(y.year), `${y.objects.toLocaleString()} objects, ${y.payloads.toLocaleString()} payloads`)).join("")}
+        <p class="note">${escapeHTML(json.method)}</p>`;
+}
+
+function renderIntelligence(json) {
+    const sat = lastSatelliteResult;
+    const satPart = sat
+        ? `${kv("Tracked objects", fmtNum(sat.count))}
+           ${kv("Catalogue source", sat.source)}
+           ${kv("Positions computed", fmtTime(sat.position_updated))}`
+        : `<div class="state-unavailable">SATELLITE DATA NOT LOADED</div>`;
+
+    const astPart = json.available === false
+        ? unavailableHTML(json)
+        : `${kv("Source", json.source)}
+           ${kv("Status", json.label)}
+           ${kv("Obtained", fmtTime(json.data_obtained_at) + " (" + fmtAge(json.age_minutes) + ")")}
+           ${kv("Objects listed", fmtNum(json.count))}
+           <p class="note">Click ☀️ SUN + ASTEROIDS to view the heliocentric orbits around the Sun.</p>`;
+
+    return `
+        <h3>EARTH OBSERVATION</h3>
+        ${kv("Globe imagery", document.getElementById("imageryStatus").textContent)}
+        ${satPart}
+        <h3>ASTEROID LAYER (HELIOCENTRIC)</h3>
+        ${astPart}`;
 }
 
 // ==========================================
@@ -940,6 +1535,7 @@ async function updateSatellites() {
         }
 
         currentSatellites = result.satellites;
+        lastSatelliteResult = result;
 
         const activeIds = new Set();
 
@@ -996,7 +1592,7 @@ async function updateSatellites() {
             }
         }
 
-        if (selectedId && !activeIds.has(selectedId)) {
+        if (selectedId && !String(selectedId).startsWith("AST-") && !activeIds.has(selectedId)) {
             selectedId = null;
             selectedLabel.label.show = false;
             document.getElementById("details").style.display = "none";
@@ -1011,21 +1607,25 @@ async function updateSatellites() {
 
         renderCategoryStats();
 
-        // Update Data Quality panel
         renderDataQuality(result.data_quality);
 
         status.textContent =
-            `CONNECTED // ${result.source}`;
+            `CONNECTED // ${result.source} // positions ${fmtTime(result.position_updated)}`;
 
-        document.getElementById("imageryStatus").textContent =
-         "Earth imagery loaded | Metadata: " +
-        (result.metadata_source || "Unavailable");
+        const feedLines = Object.entries(result.feeds || {})
+            .map(([g, i]) => `${g}: ${i.label}`).join("<br>");
+        document.getElementById("dataSourceInfo").innerHTML =
+            `Metadata: ${escapeHTML((result.metadata || {}).label || "Unavailable")}<br>` +
+            `${feedLines}<br>` +
+            `Position calculation: Skyfield<br>Refresh interval: 20 seconds<br>` +
+            `Calculated positions, not radar observations.`;
 
         viewer.scene.requestRender();
 
     } catch (error) {
         status.textContent = "DATA ERROR: " + error.message;
         console.error("Satellite API error:", error);
+        renderDataQualityError(error.message);
 
     } finally {
         updateInProgress = false;
@@ -1047,6 +1647,12 @@ function selectSatellite(encodedId) {
     if (!sat) return;
 
     selectedId = id;
+
+    for (const [, item] of asteroidBillboardMap) {
+        item.billboard.image = makeSymbolImage("asteroid", false);
+        item.billboard.width = 24;
+        item.billboard.height = 24;
+    }
 
     for (const [key, billboard] of objectBillboardMap) {
         const object = currentSatellites.find(
@@ -1107,18 +1713,10 @@ function selectSatellite(encodedId) {
 
         <b>ORBITAL DATA</b>
         <br>Speed: ${sat.speed_kms} km/s
-        <br>Inclination: ${
-            sat.inclination_deg ?? "Unavailable"
-        }°
-        <br>Period: ${
-            sat.period_min ?? "Unavailable"
-        } minutes
-        <br>Apogee: ${
-            sat.apogee_km ?? "Unavailable"
-        } km
-        <br>Perigee: ${
-            sat.perigee_km ?? "Unavailable"
-        } km
+        <br>Inclination: ${fmtUnit(sat.inclination_deg, "°")}
+        <br>Period: ${fmtUnit(sat.period_min, " minutes")}
+        <br>Apogee: ${fmtUnit(sat.apogee_km, " km")}
+        <br>Perigee: ${fmtUnit(sat.perigee_km, " km")}
 
         <div class="panel-divider"></div>
 
@@ -1137,7 +1735,7 @@ function selectSatellite(encodedId) {
 
 
 // ==========================================
-// 10. CLICK OBJECT ON GLOBE
+// 10. CLICK OBJECT OR ASTEROID ON GLOBE
 // ==========================================
 
 const clickHandler =
@@ -1146,14 +1744,14 @@ const clickHandler =
 clickHandler.setInputAction(function(movement) {
     const picked = viewer.scene.pick(movement.position);
 
-    if (
-        Cesium.defined(picked) &&
-        picked.id &&
-        picked.id.norad_id
-    ) {
-        selectSatellite(
-            encodeURIComponent(String(picked.id.norad_id))
-        );
+    if (Cesium.defined(picked) && picked.id) {
+        if (picked.id._isAsteroid && picked.id._astId) {
+            selectAsteroid(picked.id._astId);
+        } else if (picked.id.norad_id) {
+            selectSatellite(
+                encodeURIComponent(String(picked.id.norad_id))
+            );
+        }
     }
 }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
@@ -1182,6 +1780,7 @@ async function startApplication() {
         status.textContent = "EARTH READY // CONNECTING TO DATA...";
 
         await updateSatellites();
+        await prefetchAsteroids();
 
         setInterval(updateSatellites, 20000);
 
