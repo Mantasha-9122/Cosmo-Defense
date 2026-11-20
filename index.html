@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-<title>COSMO-DEFENSE // ORBITAL INTELLIGENCE</title>
+<title>COSMO-DEFENSE</title>
 
 <!-- CesiumJS 3D Globe Library & Styles -->
 <script src="https://cesium.com/downloads/cesiumjs/releases/1.146/Build/Cesium/Cesium.js"></script>
@@ -53,14 +53,15 @@ html, body {
    2. TOP COMMAND HEADER WITH LIVE UTC CLOCK
    ============================================================================ */
 header {
-    height: 54px;
-    padding: 0 20px;
+    min-height: 62px;
+    padding: 8px 22px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: rgba(6, 11, 23, 0.92);
-    border-bottom: 1px solid var(--border-subtle);
-    backdrop-filter: blur(12px);
+    background: linear-gradient(90deg, rgba(6, 13, 28, 0.96) 0%, rgba(11, 22, 44, 0.92) 55%, rgba(6, 13, 28, 0.96) 100%);
+    border-bottom: 1px solid var(--border-glow);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(14px);
     z-index: 30;
     position: relative;
 }
@@ -68,11 +69,19 @@ header {
 .brand-title {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-weight: 700;
-    font-size: 13px;
-    letter-spacing: 2.2px;
-    color: var(--text-primary);
+    gap: 11px;
+    font-weight: 800;
+    font-size: 17px;
+    letter-spacing: 2.6px;
+    text-transform: uppercase;
+    color: #f8fafc;
+    text-shadow: 0 0 18px rgba(56, 189, 248, 0.25);
+}
+
+.brand-title > span:last-child {
+    background: linear-gradient(90deg, #ffffff 0%, #bae6fd 65%, #38bdf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .live-dot {
@@ -470,80 +479,298 @@ button:hover {
     }
 }
 
-@media (max-width: 768px) {
-    header {
-        height: 48px;
-        padding: 0 12px;
-    }
-    .brand-title { font-size: 11px; letter-spacing: 1.4px; }
-    .utc-clock { font-size: 10px; padding: 4px 8px; }
+#mobileMenuBtn {
+    display: none;
+}
 
+#mobileDrawerBackdrop {
+    display: none;
+}
+
+#mobileScrollHint {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: auto;
+        min-height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+        scroll-behavior: smooth;
+        background: var(--bg-deep);
+    }
+
+    header {
+        position: sticky;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: auto;
+        min-height: 60px;
+        padding: 8px 12px;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 60;
+    }
+
+    .brand-title {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 3px;
+        min-width: 0;
+        flex: 1 1 auto;
+        text-shadow: none;
+    }
+
+    .brand-title > .live-dot {
+        display: none;
+    }
+
+    .brand-title > span:last-child {
+        display: block;
+        font-size: 14.5px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        line-height: 1.25;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .utc-clock {
+        display: inline-block;
+        align-self: flex-start;
+        margin-top: 2px;
+        font-size: 9.5px;
+        padding: 2px 7px;
+        letter-spacing: 0.4px;
+        white-space: nowrap;
+    }
+
+    #mobileMenuBtn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        background: rgba(56, 189, 248, 0.14);
+        color: var(--accent-cyan);
+        border: 1px solid var(--border-glow);
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 12px;
+        line-height: 1;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    /* Multi-page vertical flow on mobile: Page 1 = Full-screen 3D Globe, Page 2 = Telemetry & Objects */
     main {
         height: auto;
-        min-height: calc(100vh - 48px);
+        min-height: calc(100vh - 54px);
         display: flex;
         flex-direction: column;
         overflow: visible;
     }
 
-    #featureNav {
-        flex-direction: row;
-        overflow-x: auto;
-        overflow-y: hidden;
-        border-right: none;
+    /* Page 1: Full-viewport 3D globe */
+    #cesiumContainer {
+        order: 1;
+        position: relative;
+        flex: 0 0 auto;
+        width: 100%;
+        height: 82vh;
+        height: calc(100dvh - 54px);
+        min-height: 440px;
         border-bottom: 1px solid var(--border-subtle);
-        padding: 6px 8px;
-        gap: 6px;
-        -webkit-overflow-scrolling: touch;
-    }
-    .nav-item {
-        min-width: 68px;
-        min-height: 44px;
-        flex-shrink: 0;
+        z-index: 5;
     }
 
-    #leftPanel {
-        border-right: none;
-        border-bottom: 1px solid var(--border-subtle);
-        padding: 12px;
-        overflow: visible;
+    #mobileScrollHint {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        right: 14px;
+        bottom: 22px;
+        width: 42px;
+        height: 56px;
+        padding: 0;
+        z-index: 65;
+        background: linear-gradient(180deg, rgba(14, 32, 60, 0.96) 0%, rgba(7, 17, 34, 0.98) 100%);
+        color: #7dd3fc;
+        border: 1.8px solid #38bdf8;
+        border-radius: 21px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.78), 0 0 16px rgba(56, 189, 248, 0.32);
+        backdrop-filter: blur(12px);
+        cursor: pointer;
+        transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
     }
-    #leftPanel h3:first-child { margin-top: 0; }
+
+    #mobileScrollHint svg {
+        transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    #mobileScrollHint.is-up svg {
+        transform: rotate(180deg);
+    }
+
+    #mobileScrollHint:active {
+        transform: translateY(2px) scale(0.96);
+        background: rgba(56, 189, 248, 0.22);
+        border-color: var(--accent-cyan);
+    }
+
+    /* Page 2 (below globe when scrolling): Telemetry, Object Catalog, View Mode & Layer Filter */
+    #leftPanel {
+        order: 2;
+        position: static !important;
+        flex: 0 0 auto;
+        width: 100%;
+        min-height: 60vh;
+        height: auto;
+        transform: none !important;
+        border-right: none;
+        padding: 16px 14px 32px 14px;
+        overflow: visible;
+        background: #070e1c;
+        z-index: 6;
+    }
+
+    #leftPanel::before {
+        content: "ORBITAL TELEMETRY & OBJECTS";
+        display: block;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.6px;
+        color: var(--text-muted);
+        margin-bottom: 10px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    #leftPanel h3 {
+        margin-top: 14px;
+        margin-bottom: 8px;
+    }
+
+    #leftPanel h3:first-of-type {
+        margin-top: 2px;
+    }
 
     .stat {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 10px 12px;
+        padding: 11px 12px;
         margin-top: 8px;
     }
-    .stat strong { font-size: 22px; margin-top: 0; }
 
-    .view-btn-group { flex-direction: row; }
-    .view-btn-group button { flex: 1; text-align: center; padding: 10px 8px; }
-    .filter-pills { grid-template-columns: repeat(4, 1fr); }
-
-    #cesiumContainer {
-        width: 100%;
-        height: 62vh;
-        min-height: 380px;
+    .stat strong {
+        font-size: 22px;
+        margin-top: 0;
     }
 
-    #rightPanel, #objectPopup {
-        top: auto;
-        bottom: 10px;
+    .view-btn-group {
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .view-btn-group button {
+        flex: 1;
+        text-align: center;
+        padding: 9px 8px;
+    }
+
+    .filter-pills {
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+    }
+
+    /* Slide-out SIDE PANEL drawer when toggled from top button */
+    #featureNav {
+        display: flex !important;
+        flex-direction: column !important;
+        position: fixed !important;
+        top: 54px !important;
+        right: 0 !important;
+        left: auto !important;
+        bottom: 0 !important;
+        width: min(275px, 80vw) !important;
+        height: calc(100vh - 46px) !important;
+        padding: 12px 10px 24px 10px !important;
+        gap: 6px !important;
+        overflow-y: auto !important;
+        background: rgba(7, 14, 28, 0.98) !important;
+        backdrop-filter: blur(18px);
+        border-left: 1px solid var(--border-glow) !important;
+        border-right: none !important;
+        border-bottom: none !important;
+        box-shadow: -12px 0 36px rgba(0, 0, 0, 0.75);
+        transform: translate3d(100%, 0, 0);
+        transition: transform 0.24s ease;
+        z-index: 55 !important;
+    }
+
+    body.mobile-drawer-open #featureNav {
+        transform: translate3d(0, 0, 0);
+    }
+
+    #featureNav::before {
+        content: "SIDE PANEL";
+        display: block;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.6px;
+        color: var(--accent-cyan);
+        padding: 2px 6px 8px 6px;
+        border-bottom: 1px solid var(--border-subtle);
+        margin-bottom: 4px;
+    }
+
+    #featureNav .nav-item {
+        width: 100% !important;
+        min-width: 0 !important;
+        min-height: 38px !important;
+        padding: 8px 10px !important;
+        font-size: 11px !important;
+        text-align: left !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 9px !important;
+        border-radius: 7px;
+    }
+
+    #featureNav .nav-item span {
+        display: inline-block !important;
+        font-size: 14px !important;
+        margin-bottom: 0 !important;
+    }
+
+    #rightPanel,
+    #objectPopup {
+        top: 56px;
+        bottom: auto;
         left: 10px;
         right: 10px;
         width: calc(100vw - 20px);
-        max-height: 68vh;
+        max-height: 64vh;
+        padding: 10px;
+        font-size: 12px;
         border-radius: 12px;
+        z-index: 58;
+    }
+
+    .kv {
+        gap: 6px;
+        padding: 4px 2px;
     }
 }
 
-@media (max-width: 420px) {
-    .filter-pills { grid-template-columns: 1fr 1fr; }
-    .view-btn-group { flex-direction: column; }
-}
 </style>
 </head>
 
@@ -553,9 +780,10 @@ button:hover {
 <header>
   <div class="brand-title">
     <span class="live-dot"></span>
-    <span>COSMO-DEFENSE // ORBITAL INTELLIGENCE</span>
+    <span>COSMO-DEFENSE</span>
+    <div class="utc-clock" id="utcClock">--:--:-- UTC</div>
   </div>
-  <div class="utc-clock" id="utcClock">--:--:-- UTC</div>
+  <button id="mobileMenuBtn" type="button" onclick="toggleMobileDrawer()">☰ Menu</button>
 </header>
 
 <main>
@@ -721,7 +949,7 @@ button:hover {
     <div class="screening-box">
       <div class="screening-state">CREATOR &amp; OVERVIEW</div>
       <p class="note">
-        Created by <strong>Mantasha Naushad</strong>.<br> <strong>COSMO-DEFENSE </strong> is an interactive 3D space-domain awareness dashboard built with Python (Flask), Skyfield (SGP4 orbital propagation), and CesiumJS using CelesTrak and NASA/JPL data[cite: 4, 6, 11].
+        Created by <strong>Mantasha Naushad</strong>.<br> <strong>COSMO-DEFENSE </strong> is an interactive 3D space-domain awareness dashboard built with Python (Flask), Skyfield (SGP4 orbital propagation), and CesiumJS using CelesTrak and NASA/JPL data.
       </p>
     </div>
 
@@ -760,7 +988,37 @@ button:hover {
   </section>
 </aside>
 
+
+<div id="mobileDrawerBackdrop" onclick="toggleMobileDrawer(false)"></div>
+
 </main>
+
+<script>
+  function toggleMobileDrawer(forceState) {
+    const isOpen = typeof forceState === "boolean"
+      ? document.body.classList.toggle("mobile-drawer-open", forceState)
+      : document.body.classList.toggle("mobile-drawer-open");
+    const btn = document.getElementById("mobileMenuBtn");
+    if (btn) {
+      btn.textContent = isOpen ? "✕" : "☰ Menu";
+      btn.setAttribute("aria-expanded", String(isOpen));
+    }
+    if (typeof viewer !== "undefined") {
+      viewer.resize();
+      viewer.scene.requestRender();
+    }
+  }
+
+  document.addEventListener("click", function(event) {
+    if (window.innerWidth > 768) return;
+    if (!document.body.classList.contains("mobile-drawer-open")) return;
+    const nav = document.getElementById("featureNav");
+    const btn = document.getElementById("mobileMenuBtn");
+    if (nav && !nav.contains(event.target) && btn && !btn.contains(event.target)) {
+      toggleMobileDrawer(false);
+    }
+  });
+</script>
 
 <script>
 
@@ -1064,11 +1322,56 @@ function inferMissionPurpose(sat) {
     return "Active Earth-Orbiting Satellite — Technology demonstration, scientific research or communications";
 }
 
+function setMobileArrowDirection(isUp) {
+    const btn = document.getElementById("mobileScrollHint");
+    if (!btn) return;
+    btn.classList.toggle("is-up", Boolean(isUp));
+    btn.setAttribute("data-dir", isUp ? "up" : "down");
+    btn.setAttribute("aria-label", isUp ? "Scroll back to Globe" : "Scroll to Telemetry and Objects");
+    btn.setAttribute("title", isUp ? "Back to Globe" : "Telemetry & Objects");
+}
+
+function isAtLowerSection() {
+    const leftPanel = document.getElementById("leftPanel");
+    if (!leftPanel) return window.scrollY > 140;
+    const rect = leftPanel.getBoundingClientRect();
+    return rect.top <= window.innerHeight * 0.6 || window.scrollY > 140;
+}
+
+function syncMobileArrowWithScroll() {
+    if (window.innerWidth > 768) return;
+    setMobileArrowDirection(isAtLowerSection());
+}
+
+function toggleMobileScrollDirection() {
+    const leftPanel = document.getElementById("leftPanel");
+    if (!leftPanel) return;
+
+    if (isAtLowerSection()) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        document.documentElement.scrollTo({ top: 0, behavior: "smooth" });
+        setMobileArrowDirection(false);
+    } else {
+        const headerEl = document.querySelector("header");
+        const headerHeight = headerEl ? headerEl.offsetHeight : 60;
+        const targetTop = leftPanel.getBoundingClientRect().top + window.scrollY - headerHeight;
+        window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+        setMobileArrowDirection(true);
+    }
+}
+
+window.addEventListener("scroll", syncMobileArrowWithScroll, { passive: true });
+window.addEventListener("resize", syncMobileArrowWithScroll);
+document.addEventListener("DOMContentLoaded", syncMobileArrowWithScroll);
+
 function toggleCatalogDrawer() {
     const drawer = document.getElementById("catalogDrawer");
     const arrow = document.getElementById("catalogArrow");
     const isOpen = drawer.classList.toggle("open");
     arrow.textContent = isOpen ? "▲" : "▼";
+    if (isOpen && window.innerWidth <= 768) {
+        drawer.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
 }
 
 function openObjectPopup(titleHtml, bodyHtml) {
@@ -1090,6 +1393,10 @@ function navigateFeature(targetId, button) {
 
     const panel = document.getElementById("rightPanel");
     document.querySelectorAll(".feature-view").forEach(view => view.classList.remove("active"));
+
+    if (window.innerWidth <= 768 && typeof toggleMobileDrawer === "function") {
+        toggleMobileDrawer(false);
+    }
 
     if (targetId === "earthFeature") {
         panel.classList.remove("open");
@@ -1971,6 +2278,10 @@ async function startApplication() {
 
         viewer.resize();
         showEarthMode();
+        setTimeout(() => {
+            viewer.resize();
+            viewer.scene.requestRender();
+        }, 250);
 
         status.textContent = "CONNECTING TELEMETRY...";
         await updateSatellites();
@@ -1985,5 +2296,11 @@ async function startApplication() {
 
 startApplication();
 </script>
+<button id="mobileScrollHint" type="button" onclick="toggleMobileScrollDirection()" aria-label="Scroll to Telemetry and Objects" title="Telemetry &amp; Objects">
+  <svg id="mobileScrollArrowIcon" width="20" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M12 4V19M12 19L5.5 12.5M12 19L18.5 12.5" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
+
 </body>
 </html>
