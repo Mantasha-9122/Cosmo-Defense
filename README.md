@@ -1,4 +1,4 @@
-# COSMO-DEFENSE // Orbital Intelligence
+# COSMO-DEFENSE
 
 An interactive 3D orbital intelligence and space-domain awareness dashboard built with **Python (Flask)**, **Skyfield (SGP4)**, and **CesiumJS**. It visualizes Earth-orbiting objects alongside the Sun and Potentially Hazardous Asteroids (PHAs) in a Tactical HUD interface.
 
