@@ -2,190 +2,161 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>COSMO DEFENSE - Orbital Intelligence</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>COSMO-DEFENSE // ORBITAL INTELLIGENCE</title>
 
+<!-- CesiumJS 3D Globe Library & Styles -->
 <script src="https://cesium.com/downloads/cesiumjs/releases/1.146/Build/Cesium/Cesium.js"></script>
 <link href="https://cesium.com/downloads/cesiumjs/releases/1.146/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
 <style>
+/* ============================================================================
+   1. TACTICAL OBSIDIAN GLASSMORPHISM THEME & CSS VARIABLES
+   ============================================================================ */
+:root {
+    --bg-deep: #030712;
+    --bg-panel: rgba(10, 17, 32, 0.78);
+    --bg-card: rgba(17, 29, 52, 0.72);
+    --bg-card-hover: rgba(26, 45, 78, 0.85);
+    --border-subtle: rgba(56, 189, 248, 0.22);
+    --border-glow: rgba(56, 189, 248, 0.55);
+    --accent-cyan: #38bdf8;
+    --accent-emerald: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-rose: #fb7185;
+    --accent-violet: #c084fc;
+    --text-primary: #f1f5f9;
+    --text-muted: #94a3b8;
+    --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --font-mono: 'Consolas', 'JetBrains Mono', 'Courier New', monospace;
+}
+
 * { box-sizing: border-box; }
 
-body {
+html, body {
     margin: 0;
-    background: #050d18;
-    color: #d9edff;
-    font-family: Arial, sans-serif;
-}
-
-header {
-    height: 62px;
-    padding: 21px;
-    background: #0a1929;
-    border-bottom: 1px solid #17415c;
-    font-weight: bold;
-    letter-spacing: 2px;
-}
-
-main {
-    height: calc(100vh - 62px);
-    display: grid;
-    grid-template-columns: 66px 270px minmax(0, 1fr);
-    overflow: hidden;
-}
-
-#featureNav {
-    background: #06111e;
-    border-right: 1px solid #17354c;
-    padding: 12px 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-    overflow-y: auto;
-}
-.nav-item {
+    padding: 0;
     width: 100%;
-    min-height: 43px;
-    padding: 6px 3px;
-    font-size: 9px;
-    line-height: 1.25;
-    border-color: transparent;
-    background: transparent;
-    color: #91a9bb;
-}
-.nav-item span { display:block; font-size:17px; margin-bottom:3px; }
-.nav-item.active, .nav-item:hover {
-    color: #27d9ed;
-    background: #102d42;
-    border-color: #1a6682;
+    height: 100%;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    overflow-x: hidden;
 }
 
-aside {
-    background: #091725;
-    padding: 17px;
-    overflow-y: auto;
-    min-width: 0;
-}
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: rgba(3, 7, 18, 0.5); }
+::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.35); border-radius: 4px; }
 
-#leftPanel {
-    border-right: 1px solid #17354c;
-}
-
-#rightPanel {
-    position: fixed;
-    z-index: 20;
-    top: 76px;
-    right: 18px;
-    width: min(410px, calc(100vw - 36px));
-    max-height: calc(100vh - 94px);
-    overflow-y: auto;
-    display: none;
-    border: 1px solid #1b536e;
-    border-radius: 9px;
-    box-shadow: 0 16px 48px rgba(0,0,0,.55);
-    background: #091725;
-}
-#rightPanel.open { display: block; }
-.feature-view { display: none; }
-.feature-view.active { display: block; }
-.feature-panel-head {
-    position: sticky;
-    top: -17px;
-    z-index: 2;
+/* ============================================================================
+   2. TOP COMMAND HEADER WITH LIVE UTC CLOCK
+   ============================================================================ */
+header {
+    height: 54px;
+    padding: 0 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin: -17px -17px 12px;
-    padding: 13px 17px;
-    background: #0a1929;
-    border-bottom: 1px solid #17415c;
-}
-.feature-panel-head strong { color: #27d9ed; font-size: 11px; letter-spacing: 1.2px; }
-.feature-panel-head button { padding: 5px 10px; }
-
-h3 {
-    font-size: 11px;
-    color: #20d9ef;
-    letter-spacing: 1.5px;
-    margin-top: 21px;
-    margin-bottom: 10px;
+    background: rgba(6, 11, 23, 0.92);
+    border-bottom: 1px solid var(--border-subtle);
+    backdrop-filter: blur(12px);
+    z-index: 30;
+    position: relative;
 }
 
-.status {
-    font-size: 11px;
-    line-height: 1.7;
-    color: #ffc66d;
-    overflow-wrap: anywhere;
+.brand-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 2.2px;
+    color: var(--text-primary);
 }
 
-.stat {
-    padding: 13px;
-    margin-top: 12px;
-    background: #10283a;
+.live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-emerald);
+    box-shadow: 0 0 10px var(--accent-emerald);
+    animation: pulseGlow 2s infinite;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.85); }
+}
+
+.utc-clock {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent-cyan);
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid var(--border-subtle);
+    padding: 5px 11px;
     border-radius: 5px;
-    font-size: 11px;
-    color: #9db8ca;
+    letter-spacing: 1px;
 }
 
-.stat strong {
-    display: block;
-    font-size: 29px;
-    color: #21d9ed;
-    margin-top: 7px;
+/* ============================================================================
+   3. DESKTOP LAYOUT GRID
+   ============================================================================ */
+main {
+    height: calc(100vh - 54px);
+    display: grid;
+    grid-template-columns: 66px 268px minmax(0, 1fr);
+    overflow: hidden;
+    position: relative;
 }
 
-.note {
-    color: #91a9bb;
-    font-size: 11px;
-    line-height: 1.7;
+/* Left Vertical Feature Navigation */
+#featureNav {
+    background: rgba(5, 9, 20, 0.94);
+    border-right: 1px solid var(--border-subtle);
+    padding: 10px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+    z-index: 15;
 }
 
-#satelliteSearch {
+.nav-item {
     width: 100%;
-    padding: 10px;
-    margin: 8px 0;
-    background: #10283a;
-    border: 1px solid #24516b;
-    color: white;
-    border-radius: 4px;
-    outline: none;
-}
-
-#satelliteList {
-    font-size: 11px;
-}
-
-.sat {
-    padding: 9px 5px;
-    border-bottom: 1px solid #193246;
+    min-height: 46px;
+    padding: 6px 3px;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1.25;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: 6px;
     cursor: pointer;
-    overflow-wrap: anywhere;
+    transition: all 0.18s ease;
+}
+.nav-item span { display: block; font-size: 16px; margin-bottom: 3px; }
+.nav-item.active, .nav-item:hover {
+    color: var(--accent-cyan);
+    background: rgba(56, 189, 248, 0.14);
+    border-color: var(--border-glow);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.12);
 }
 
-.sat:hover, .sat.active {
-    background: #15364d;
-    color: #26e5fa;
+/* Left Control Sidebar (Glassmorphism) */
+#leftPanel {
+    background: var(--bg-panel);
+    backdrop-filter: blur(14px);
+    padding: 15px;
+    overflow-y: auto;
+    min-width: 0;
+    border-right: 1px solid var(--border-subtle);
+    z-index: 10;
 }
 
-.category-symbol {
-    display: inline-block;
-    width: 20px;
-    font-size: 15px;
-    font-weight: bold;
-    text-align: center;
-    margin-right: 5px;
-}
-
-#details {
-    background: #10283a;
-    padding: 12px;
-    border-radius: 5px;
-    font-size: 11px;
-    line-height: 1.9;
-    display: none;
-    overflow-wrap: anywhere;
-}
-
+/* 3D Globe Viewport */
 #cesiumContainer {
     position: relative;
     width: 100%;
@@ -195,21 +166,254 @@ h3 {
     overflow: hidden;
 }
 
-button {
-    background: #102d42;
-    border: 1px solid #1a6682;
-    color: #27d9ed;
-    padding: 9px 12px;
-    cursor: pointer;
-    border-radius: 4px;
+/* ============================================================================
+   4. FLOATING DRAWER & OBJECT INFO POP-UP
+   ============================================================================ */
+#rightPanel {
+    position: fixed;
+    z-index: 25;
+    top: 68px;
+    right: 16px;
+    width: min(410px, calc(100vw - 32px));
+    max-height: calc(100vh - 84px);
+    overflow-y: auto;
+    display: none;
+    border: 1px solid var(--border-glow);
+    border-radius: 10px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75);
+    background: var(--bg-panel);
+    backdrop-filter: blur(16px);
+    padding: 16px;
+}
+#rightPanel.open { display: block; }
+.feature-view { display: none; }
+.feature-view.active { display: block; }
+
+.feature-panel-head {
+    position: sticky;
+    top: -16px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: -16px -16px 12px;
+    padding: 12px 16px;
+    background: rgba(6, 11, 23, 0.95);
+    border-bottom: 1px solid var(--border-subtle);
+}
+.feature-panel-head strong { color: var(--accent-cyan); font-size: 11px; letter-spacing: 1.4px; }
+.feature-panel-head button { padding: 4px 10px; }
+
+/* Floating Pop-up Card for Clicked Satellite or Asteroid */
+#objectPopup {
+    position: fixed;
+    z-index: 35;
+    top: 70px;
+    left: 348px;
+    width: min(370px, calc(100vw - 36px));
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+    display: none;
+    background: rgba(8, 15, 29, 0.92);
+    border: 1px solid var(--accent-cyan);
+    border-radius: 10px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85), 0 0 20px rgba(56, 189, 248, 0.15);
+    padding: 16px;
+    backdrop-filter: blur(16px);
+}
+#objectPopup.open { display: block; }
+
+.popup-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.popup-close {
+    padding: 4px 9px;
+    font-size: 12px;
+    line-height: 1;
 }
 
-button:hover { background: #174b65; }
-
-#imageryStatus {
-    font-size: 11px;
-    color: #a5bfd0;
+/* Mission & Purpose Highlight Box */
+.purpose-badge {
+    background: rgba(56, 189, 248, 0.12);
+    border-left: 3px solid var(--accent-cyan);
+    padding: 9px 11px;
+    border-radius: 5px;
+    margin: 10px 0;
+    font-size: 12px;
     line-height: 1.5;
+    color: #e0f2fe;
+}
+.purpose-badge span {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 1.3px;
+    color: var(--accent-cyan);
+    font-weight: 700;
+    margin-bottom: 3px;
+}
+
+/* ============================================================================
+   5. HUD COMPONENTS, FILTER PILLS & TELEMETRY TYPOGRAPHY
+   ============================================================================ */
+h3 {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    letter-spacing: 1.6px;
+    margin-top: 18px;
+    margin-bottom: 9px;
+    text-transform: uppercase;
+}
+
+.status {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    line-height: 1.6;
+    color: var(--accent-amber);
+    overflow-wrap: anywhere;
+}
+
+.stat {
+    padding: 12px;
+    margin-top: 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 7px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+}
+.stat strong {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 27px;
+    color: var(--accent-cyan);
+    margin-top: 5px;
+    text-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
+}
+
+.note {
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+button {
+    background: rgba(17, 29, 52, 0.85);
+    border: 1px solid var(--border-subtle);
+    color: var(--accent-cyan);
+    padding: 8px 11px;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 11px;
+    transition: all 0.15s ease;
+}
+button:hover {
+    background: rgba(56, 189, 248, 0.18);
+    border-color: var(--border-glow);
+}
+
+/* Quick Category Filter Pills */
+.filter-pills {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+.filter-pill {
+    font-size: 10px;
+    padding: 7px 8px;
+    text-align: center;
+    color: var(--text-muted);
+}
+.filter-pill.active {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: var(--accent-cyan);
+    color: #ffffff;
+    font-weight: 700;
+}
+
+/* Collapsible Object Catalog Button & Drawer */
+.catalog-toggle-btn {
+    width: 100%;
+    margin-top: 12px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(56, 189, 248, 0.1);
+}
+
+#catalogDrawer {
+    display: none;
+    margin-top: 8px;
+    background: rgba(6, 12, 24, 0.9);
+    border: 1px solid var(--border-subtle);
+    border-radius: 7px;
+    padding: 10px;
+}
+#catalogDrawer.open { display: block; }
+
+#satelliteSearch {
+    width: 100%;
+    padding: 8px 10px;
+    margin: 2px 0 8px;
+    background: rgba(17, 29, 52, 0.9);
+    border: 1px solid var(--border-subtle);
+    color: white;
+    border-radius: 5px;
+    outline: none;
+    font-size: 12px;
+}
+#satelliteSearch:focus { border-color: var(--accent-cyan); }
+
+#satelliteList {
+    font-size: 11px;
+    max-height: 230px;
+    overflow-y: auto;
+}
+
+.sat {
+    padding: 7px 6px;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+    cursor: pointer;
+    overflow-wrap: anywhere;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.sat:hover, .sat.active {
+    background: rgba(56, 189, 248, 0.16);
+    color: #ffffff;
+}
+
+.dot-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.view-btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+.view-btn-group button {
+    width: 100%;
+    text-align: left;
+    font-weight: 700;
+}
+.view-btn-group button.mode-active {
+    background: rgba(56, 189, 248, 0.22);
+    border-color: var(--accent-cyan);
+    color: #ffffff;
 }
 
 .category-row {
@@ -217,170 +421,209 @@ button:hover { background: #174b65; }
     align-items: center;
     justify-content: space-between;
     padding: 9px 7px;
-    border-bottom: 1px solid #193246;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.12);
     font-size: 11px;
 }
-
-.category-left {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-}
-
-.legend-shape {
-    width: 12px;
-    height: 12px;
-    display: inline-block;
-}
+.category-left { display: flex; align-items: center; gap: 9px; }
+.legend-shape { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 
 .screening-box {
-    background: #10283a;
-    border: 1px solid #31506a;
-    border-radius: 5px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 7px;
     padding: 12px;
     margin-top: 10px;
 }
-
 .screening-state {
-    color: #ffc66d;
+    color: var(--accent-amber);
     font-size: 11px;
-    font-weight: bold;
+    font-weight: 700;
     letter-spacing: 1px;
 }
+.alert-empty { color: var(--text-muted); font-size: 11px; line-height: 1.7; margin-top: 12px; }
+.panel-divider { height: 1px; background: rgba(56, 189, 248, 0.15); margin: 12px 0; }
 
-.alert-empty {
-    color: #91a9bb;
-    font-size: 11px;
-    line-height: 1.7;
-    margin-top: 12px;
-}
-
-.panel-divider {
-    height: 1px;
-    background: #193246;
-    margin: 15px 0;
-}
-
-#qualityFeature .stat strong { font-size: 24px; }
+#qualityFeature .stat strong { font-size: 22px; }
 .kv { display:flex; justify-content:space-between; gap:10px; padding:6px 2px;
-      border-bottom:1px solid #193246; font-size:11px; color:#9db8ca; }
-.kv b { color:#21d9ed; text-align:right; overflow-wrap:anywhere; }
-.bar-row { font-size:11px; margin:6px 0; color:#9db8ca; }
-.bar-row .bar { height:8px; background:#193246; border-radius:3px; margin-top:3px; }
-.bar-row .bar i { display:block; height:100%; background:#27d9ed; border-radius:3px; }
-.state-unavailable { color:#ffc66d; font-weight:bold; font-size:11px; letter-spacing:1px; }
-.state-error { color:#ff6b7f; font-weight:bold; font-size:11px; letter-spacing:1px; }
-.fail-list { font-size:10px; line-height:1.6; color:#c8d9e6; overflow-wrap:anywhere; }
+      border-bottom:1px solid rgba(56, 189, 248, 0.12); font-size:11px; color:var(--text-muted); }
+.kv b { color:var(--accent-cyan); font-family:var(--font-mono); text-align:right; overflow-wrap:anywhere; }
+.bar-row { font-size:11px; margin:7px 0; color:var(--text-muted); }
+.bar-row .bar { height:7px; background:rgba(56, 189, 248, 0.12); border-radius:4px; margin-top:4px; }
+.bar-row .bar i { display:block; height:100%; background:linear-gradient(90deg, #0284c7, #38bdf8); border-radius:4px; }
+.state-unavailable { color:var(--accent-amber); font-weight:bold; font-size:11px; letter-spacing:1px; }
+.state-error { color:var(--accent-rose); font-weight:bold; font-size:11px; letter-spacing:1px; }
+.fail-list { font-size:10px; line-height:1.6; color:#cbd5e1; overflow-wrap:anywhere; }
 
-@media(max-width:1000px) {
+/* ============================================================================
+   6. RESPONSIVE BREAKPOINTS (Tablet & Mobile)
+   ============================================================================ */
+@media (max-width: 1024px) {
     main {
-        grid-template-columns: 58px 230px minmax(0, 1fr);
+        grid-template-columns: 60px 232px minmax(0, 1fr);
     }
-
-    #rightPanel { grid-column: auto; }
+    #objectPopup {
+        left: 304px;
+        width: min(340px, calc(100vw - 320px));
+    }
+    #rightPanel {
+        width: min(360px, calc(100vw - 32px));
+    }
 }
 
-@media(max-width:700px) {
+@media (max-width: 768px) {
+    header {
+        height: 48px;
+        padding: 0 12px;
+    }
+    .brand-title { font-size: 11px; letter-spacing: 1.4px; }
+    .utc-clock { font-size: 10px; padding: 4px 8px; }
+
     main {
         height: auto;
-        min-height: calc(100vh - 62px);
-        display: grid;
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 220px minmax(480px, 65vh);
+        min-height: calc(100vh - 48px);
+        display: flex;
+        flex-direction: column;
         overflow: visible;
     }
+
     #featureNav {
-        grid-row: 1;
         flex-direction: row;
         overflow-x: auto;
         overflow-y: hidden;
         border-right: none;
-        border-bottom: 1px solid #17354c;
+        border-bottom: 1px solid var(--border-subtle);
+        padding: 6px 8px;
+        gap: 6px;
+        -webkit-overflow-scrolling: touch;
     }
-    .nav-item { min-width: 76px; }
+    .nav-item {
+        min-width: 68px;
+        min-height: 44px;
+        flex-shrink: 0;
+    }
+
     #leftPanel {
-        grid-row: 2;
         border-right: none;
-        border-bottom: 1px solid #17354c;
+        border-bottom: 1px solid var(--border-subtle);
+        padding: 12px;
+        overflow: visible;
     }
+    #leftPanel h3:first-child { margin-top: 0; }
+
+    .stat {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        margin-top: 8px;
+    }
+    .stat strong { font-size: 22px; margin-top: 0; }
+
+    .view-btn-group { flex-direction: row; }
+    .view-btn-group button { flex: 1; text-align: center; padding: 10px 8px; }
+    .filter-pills { grid-template-columns: repeat(4, 1fr); }
 
     #cesiumContainer {
-        grid-row: 3;
+        width: 100%;
+        height: 62vh;
+        min-height: 380px;
     }
 
-    #rightPanel {
-        top: 118px;
+    #rightPanel, #objectPopup {
+        top: auto;
+        bottom: 10px;
+        left: 10px;
         right: 10px;
         width: calc(100vw - 20px);
-        max-height: calc(100vh - 130px);
+        max-height: 68vh;
+        border-radius: 12px;
     }
+}
+
+@media (max-width: 420px) {
+    .filter-pills { grid-template-columns: 1fr 1fr; }
+    .view-btn-group { flex-direction: column; }
 }
 </style>
 </head>
 
 <body>
 
-<header>COSMO-DEFENSE // ORBITAL INTELLIGENCE</header>
+<!-- TOP COMMAND HEADER -->
+<header>
+  <div class="brand-title">
+    <span class="live-dot"></span>
+    <span>COSMO-DEFENSE // ORBITAL INTELLIGENCE</span>
+  </div>
+  <div class="utc-clock" id="utcClock">--:--:-- UTC</div>
+</header>
 
 <main>
 
+<!-- LEFT FEATURE NAVIGATION BAR -->
 <nav id="featureNav" aria-label="Dashboard features">
   <button class="nav-item active" data-target="earthFeature" onclick="navigateFeature('earthFeature', this)"><span>🌍</span>Earth 3D</button>
-  <button class="nav-item" data-target="classificationFeature" onclick="navigateFeature('classificationFeature', this)"><span>◇</span>Classification</button>
+  <button class="nav-item" data-target="classificationFeature" onclick="navigateFeature('classificationFeature', this)"><span>◇</span>Classes</button>
   <button class="nav-item" data-target="asteroidFeature" onclick="navigateFeature('asteroidFeature', this)"><span>☄️</span>Asteroids</button>
-  <button class="nav-item" data-target="qualityFeature" onclick="navigateFeature('qualityFeature', this)"><span>✓</span>Data Quality</button>
-  <button class="nav-item" data-target="healthFeature" onclick="navigateFeature('healthFeature', this)"><span>◉</span>Orbital Health</button>
+  <button class="nav-item" data-target="qualityFeature" onclick="navigateFeature('qualityFeature', this)"><span>✓</span>Quality</button>
+  <button class="nav-item" data-target="healthFeature" onclick="navigateFeature('healthFeature', this)"><span>◉</span>Health</button>
   <button class="nav-item" data-target="congestionFeature" onclick="navigateFeature('congestionFeature', this)"><span>▦</span>Congestion</button>
-  <button class="nav-item" data-target="intelligenceFeature" onclick="navigateFeature('intelligenceFeature', this)"><span>⌖</span>Earth Intel</button>
+  <button class="nav-item" data-target="intelligenceFeature" onclick="navigateFeature('intelligenceFeature', this)"><span>⌖</span>Intel</button>
   <button class="nav-item" data-target="historyFeature" onclick="navigateFeature('historyFeature', this)"><span>◷</span>History</button>
 </nav>
 
+<!-- LEFT CONTROL SIDEBAR -->
 <aside id="leftPanel">
 
-<h3>SYSTEM STATUS</h3>
-<div class="status" id="status">STARTING...</div>
+  <h3>SYSTEM TELEMETRY</h3>
+  <div class="status" id="status">INITIALIZING...</div>
 
-<div class="stat">
-    TRACKED OBJECTS
-    <strong id="count">0</strong>
-</div>
+  <div class="stat">
+      <span>ACTIVE TRACKED OBJECTS</span>
+      <strong id="count">0</strong>
+  </div>
 
-<h3 id="earthFeature">EARTH IMAGERY // 3D GLOBE</h3>
-<div id="imageryStatus">Loading Earth texture...</div>
+  <!-- Collapsible Object Catalog Button -->
+  <button type="button" class="catalog-toggle-btn" id="catalogToggleBtn" onclick="toggleCatalogDrawer()">
+    <span>📋 OBJECT CATALOG</span>
+    <span id="catalogArrow">▼</span>
+  </button>
 
-<h3 id="catalogFeature">SATELLITE ORBITAL POSITIONS // OBJECT CATALOG</h3>
-<input id="satelliteSearch" type="text" placeholder="Search name or NORAD ID...">
-<div class="note" id="catalogInfo">Waiting for data...</div>
-<div id="satelliteList"></div>
+  <div id="catalogDrawer">
+    <input id="satelliteSearch" type="text" placeholder="Search name or NORAD ID...">
+    <div class="note" id="catalogInfo">Waiting for data...</div>
+    <div id="satelliteList"></div>
+  </div>
 
-<h3>SELECTED OBJECT</h3>
-<div id="details">Select an object on the globe or in the catalog.</div>
+  <h3>VIEW MODE</h3>
+  <div class="view-btn-group">
+    <button id="btnEarthMode" class="mode-active" onclick="showEarthMode()">🌍 EARTH + SATELLITES</button>
+    <button id="btnAsteroidMode" onclick="showAsteroidMode()">☀️ SUN + ASTEROIDS</button>
+  </div>
 
-<h3>CAMERA CONTROLS</h3>
-<div style="display:flex; gap:6px; flex-wrap:wrap;">
-  <button onclick="resetCamera()">EARTH VIEW</button>
-  <button onclick="focusSunAndAsteroids()">☀️ SUN + ASTEROIDS</button>
-</div>
-
-<p class="note">
-Mouse wheel: Manual zoom<br>
-Left drag: Rotate Earth / Sun<br>
-Right drag: Pan<br>
-Click object: View details
-</p>
-
-<h3>DATA INFORMATION</h3>
-<p class="note" id="dataSourceInfo">
-Source: waiting for first response...<br>
-Position calculation: Skyfield<br>
-Refresh interval: 20 seconds<br>
-Calculated positions, not radar observations.
-</p>
+  <h3>GLOBE LAYER FILTER</h3>
+  <div class="filter-pills">
+    <button class="filter-pill active" onclick="setCategoryFilter('all', this)">All Objects</button>
+    <button class="filter-pill" onclick="setCategoryFilter('satellite', this)">Satellites</button>
+    <button class="filter-pill" onclick="setCategoryFilter('station', this)">Stations</button>
+    <button class="filter-pill" onclick="setCategoryFilter('rocket_body', this)">Rockets</button>
+  </div>
 
 </aside>
 
+<!-- 3D CESIUM GLOBE CONTAINER -->
 <div id="cesiumContainer"></div>
 
+<!-- FLOATING POP-UP CARD FOR SELECTED SATELLITE OR ASTEROID -->
+<div id="objectPopup" role="dialog" aria-live="polite">
+  <div class="popup-header">
+    <div id="popupTitle"></div>
+    <button type="button" class="popup-close" onclick="closeObjectPopup()" aria-label="Close object info">✕</button>
+  </div>
+  <div id="popupBody"></div>
+</div>
+
+<!-- RIGHT SLIDE-OVER FEATURE PANEL -->
 <aside id="rightPanel" aria-live="polite">
   <div class="feature-panel-head">
     <strong id="featurePanelTitle">ORBITAL INTELLIGENCE</strong>
@@ -390,7 +633,7 @@ Calculated positions, not radar observations.
   <section class="feature-view" id="classificationFeature">
     <h3>OBJECT CLASSIFICATION</h3>
     <div id="categoryStats"></div>
-    <p class="note">Counts update from the current catalogue response. Unclassified objects remain marked Unknown rather than being guessed.</p>
+    <p class="note">Counts update from the current catalogue response. Unclassified objects remain marked Unknown.</p>
   </section>
 
   <section class="feature-view" id="asteroidFeature">
@@ -419,41 +662,38 @@ Calculated positions, not radar observations.
   </section>
 
   <section class="feature-view" id="qualityFeature">
-
     <h3>DATA QUALITY CHECKS</h3>
 
     <div class="screening-box">
-        <div class="screening-state" id="qualityStatus">
-            WAITING FOR DATA
-        </div>
+        <div class="screening-state" id="qualityStatus">WAITING FOR DATA</div>
 
         <div class="stat">
-            TLE OBJECTS
+            <span>TLE OBJECTS</span>
             <strong id="qualityTLE">0</strong>
         </div>
 
         <div class="stat">
-            METADATA MATCHES
+            <span>METADATA MATCHES</span>
             <strong id="qualityMatches">0</strong>
         </div>
 
         <div class="stat">
-            CALCULATED POSITIONS
+            <span>CALCULATED POSITIONS</span>
             <strong id="qualityPositions">0</strong>
         </div>
 
         <div class="stat">
-            UNMATCHED METADATA
+            <span>UNMATCHED METADATA</span>
             <strong id="qualityUnmatched">0</strong>
         </div>
 
         <div class="stat">
-            UNKNOWN CLASSIFICATIONS
+            <span>UNKNOWN CLASSIFICATIONS</span>
             <strong id="qualityUnknown">0</strong>
         </div>
 
         <div class="stat">
-            MISSING OWNER METADATA
+            <span>MISSING OWNER METADATA</span>
             <strong id="qualityMissing">0</strong>
         </div>
 
@@ -472,13 +712,6 @@ Calculated positions, not radar observations.
             Waiting for source information...
         </p>
     </div>
-
-    <p class="note">
-        These checks describe catalogue matching and position
-        calculation. They do not represent radar accuracy or
-        collision-risk predictions.
-    </p>
-
   </section>
 </aside>
 
@@ -486,10 +719,22 @@ Calculated positions, not radar observations.
 
 <script>
 
-// ==========================================
-// 1. CESIUM VIEWER
-// ==========================================
+// ============================================================================
+// 1. LIVE UTC DIGITAL CLOCK (Top-Right Header)
+// ============================================================================
+function updateUtcClock() {
+    const now = new Date();
+    const text = now.toISOString().replace("T", " ").slice(0, 19) + " UTC";
+    const el = document.getElementById("utcClock");
+    if (el) el.textContent = text;
+}
+updateUtcClock();
+setInterval(updateUtcClock, 1000);
 
+
+// ============================================================================
+// 2. CESIUM 3D GLOBE VIEWER INITIALIZATION
+// ============================================================================
 const viewer = new Cesium.Viewer("cesiumContainer", {
     baseLayer: false,
     baseLayerPicker: false,
@@ -507,29 +752,27 @@ const viewer = new Cesium.Viewer("cesiumContainer", {
 });
 
 
-// ==========================================
-// 2. CAMERA SETTINGS
-// ==========================================
-
+// ============================================================================
+// 3. CAMERA CONTROLS, FILTERING & VIEW MODES (EARTH vs SUN + ASTEROIDS)
+// ============================================================================
 const controller = viewer.scene.screenSpaceCameraController;
-
 controller.enableInputs = true;
 controller.enableZoom = true;
 controller.enableRotate = true;
 controller.enableTilt = true;
 controller.enableTranslate = true;
-
 controller.inertiaZoom = 0;
 controller.inertiaSpin = 0;
 controller.inertiaTranslate = 0;
-
 controller.minimumZoomDistance = 700000;
 controller.maximumZoomDistance = 500000000;
 
 viewer.clock.shouldAnimate = false;
 
-// Scaled 1 AU = 90,000,000 meters so Sun, Earth, and Asteroid orbits are all clearly visible together
 const VIS_AU_METERS = 90000000;
+let activeViewMode = "earth";     // "earth" | "asteroid"
+let activeCategoryFilter = "all"; // "all" | "satellite" | "station" | "rocket_body"
+let imageryStatusText = "Loading Earth texture...";
 
 function getSunVisualPosition() {
     const now = Cesium.JulianDate.now();
@@ -545,32 +788,49 @@ function getSunVisualPosition() {
     return Cesium.Cartesian3.multiplyByScalar(sunDir, VIS_AU_METERS, new Cesium.Cartesian3());
 }
 
-function resetCamera() {
-    viewer.camera.cancelFlight();
+function setLayerVisibility(mode) {
+    activeViewMode = mode;
+    const isAsteroidMode = (mode === "asteroid");
 
+    objectBillboards.show = !isAsteroidMode;
+    selectedOrbitTrack.show = !isAsteroidMode;
+    asteroidBillboards.show = isAsteroidMode;
+    asteroidOrbits.show = isAsteroidMode;
+
+    const sunLabel = viewer.entities.getById("sunLabelEntity");
+    if (sunLabel) sunLabel.show = isAsteroidMode;
+
+    document.getElementById("btnEarthMode").classList.toggle("mode-active", !isAsteroidMode);
+    document.getElementById("btnAsteroidMode").classList.toggle("mode-active", isAsteroidMode);
+
+    selectedLabel.label.show = false;
+    viewer.scene.requestRender();
+}
+
+function showEarthMode() {
+    setLayerVisibility("earth");
+    viewer.camera.cancelFlight();
     viewer.camera.setView({
-        destination: Cesium.Cartesian3.fromDegrees(
-            0, 15, 22000000
-        ),
+        destination: Cesium.Cartesian3.fromDegrees(0, 15, 22000000),
         orientation: {
             heading: 0,
             pitch: Cesium.Math.toRadians(-90),
             roll: 0
         }
     });
-
     viewer.scene.requestRender();
 }
 
-function focusSunAndAsteroids() {
+function showAsteroidMode() {
+    setLayerVisibility("asteroid");
     viewer.camera.cancelFlight();
+
     const sunPos = getSunVisualPosition();
     const midPoint = Cesium.Cartesian3.multiplyByScalar(sunPos, 0.55, new Cesium.Cartesian3());
     const dir = Cesium.Cartesian3.normalize(midPoint, new Cesium.Cartesian3());
     const up = new Cesium.Cartesian3(0, 0, 1);
     const side = Cesium.Cartesian3.normalize(Cesium.Cartesian3.cross(dir, up, new Cesium.Cartesian3()), new Cesium.Cartesian3());
 
-    // Position camera above the ecliptic plane so Sun, Earth, and all 25 Asteroid orbits are visible
     const camPos = Cesium.Cartesian3.add(
         midPoint,
         Cesium.Cartesian3.add(
@@ -592,142 +852,191 @@ function focusSunAndAsteroids() {
             direction: lookDir,
             up: dir
         },
-        duration: 1.1
+        duration: 1.0
     });
 }
 
+function setCategoryFilter(filterKey, btn) {
+    activeCategoryFilter = filterKey;
+    document.querySelectorAll(".filter-pill").forEach(p => p.classList.remove("active"));
+    if (btn) btn.classList.add("active");
 
-// ==========================================
-// 3. EARTH APPEARANCE
-// ==========================================
+    if (activeViewMode !== "earth") {
+        showEarthMode();
+    }
 
+    for (const [, billboard] of objectBillboardMap) {
+        const sat = billboard.id;
+        billboard.show = (filterKey === "all" || sat.category === filterKey);
+    }
+
+    const drawer = document.getElementById("catalogDrawer");
+    const arrow = document.getElementById("catalogArrow");
+    const searchInput = document.getElementById("satelliteSearch");
+
+    if (filterKey === "station") {
+        if (drawer && !drawer.classList.contains("open")) {
+            drawer.classList.add("open");
+            if (arrow) arrow.textContent = "▲";
+        }
+        if (searchInput) searchInput.value = "ISS";
+    } else if (filterKey === "rocket_body") {
+        if (drawer && !drawer.classList.contains("open")) {
+            drawer.classList.add("open");
+            if (arrow) arrow.textContent = "▲";
+        }
+        if (searchInput) searchInput.value = "R/B";
+    } else {
+        if (searchInput) searchInput.value = "";
+    }
+
+    renderCatalog(searchInput ? searchInput.value : "");
+    viewer.scene.requestRender();
+}
+
+window.addEventListener("resize", () => {
+    viewer.resize();
+    viewer.scene.requestRender();
+});
+
+
+// ============================================================================
+// 4. EARTH GLOBE STYLING & IMAGERY LAYERS
+// ============================================================================
 viewer.scene.globe.show = true;
 viewer.scene.globe.enableLighting = false;
 viewer.scene.globe.showGroundAtmosphere = true;
 viewer.scene.skyAtmosphere.show = true;
-
-viewer.scene.backgroundColor =
-    Cesium.Color.fromCssColorString("#020711");
-
-viewer.scene.globe.baseColor =
-    Cesium.Color.fromCssColorString("#15334a");
-
-
-// ==========================================
-// 4. EARTH IMAGERY
-// ==========================================
+viewer.scene.backgroundColor = Cesium.Color.fromCssColorString("#030712");
+viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString("#0f253d");
 
 async function loadEarthImagery() {
-    const display = document.getElementById("imageryStatus");
-
     try {
-        const naturalEarth =
-            await Cesium.TileMapServiceImageryProvider.fromUrl(
-                Cesium.buildModuleUrl(
-                    "Assets/Textures/NaturalEarthII"
-                )
-            );
-
+        const naturalEarth = await Cesium.TileMapServiceImageryProvider.fromUrl(
+            Cesium.buildModuleUrl("Assets/Textures/NaturalEarthII")
+        );
         viewer.imageryLayers.addImageryProvider(naturalEarth);
-        display.textContent = "Base Earth texture loaded.";
-
+        imageryStatusText = "Base Earth texture loaded.";
     } catch (error) {
-        console.error("Natural Earth error:", error);
-        display.textContent = "Fallback Earth texture unavailable.";
+        imageryStatusText = "Fallback Earth texture unavailable.";
     }
 
     try {
-        const esriProvider =
-            new Cesium.UrlTemplateImageryProvider({
-                url:
-                "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-                credit: "Esri World Imagery",
-                maximumLevel: 19
-            });
-
-        esriProvider.errorEvent.addEventListener(function(tileError) {
-            console.warn("Esri imagery tile error:", tileError && tileError.message);
-            display.textContent =
-                "Esri imagery tiles failing (offline?) - base texture only.";
+        const esriProvider = new Cesium.UrlTemplateImageryProvider({
+            url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            credit: "Esri World Imagery",
+            maximumLevel: 19
         });
-
+        esriProvider.errorEvent.addEventListener(function() {
+            imageryStatusText = "Offline mode - base Earth texture active.";
+        });
         viewer.imageryLayers.addImageryProvider(esriProvider);
-        display.textContent = "Earth imagery requested (Natural Earth + Esri).";
-
+        imageryStatusText = "Natural Earth + Esri World Imagery active.";
     } catch (error) {
         console.error("Esri imagery error:", error);
-        display.textContent = "Using fallback Earth texture.";
     }
 }
 
 
-// ==========================================
-// 5. OBJECT, SUN & ASTEROID SYMBOLS
-// ==========================================
+// ============================================================================
+// 5. CRISP CIRCLE-FREE EMOJI ICONS (ENLARGED SIZES) & HELPER FUNCTIONS
+// ============================================================================
+const objectBillboards = viewer.scene.primitives.add(new Cesium.BillboardCollection());
+const asteroidBillboards = viewer.scene.primitives.add(new Cesium.BillboardCollection());
+const asteroidOrbits = viewer.scene.primitives.add(new Cesium.PolylineCollection());
+const selectedOrbitTrack = viewer.scene.primitives.add(new Cesium.PolylineCollection());
 
-const objectBillboards =
-    viewer.scene.primitives.add(
-        new Cesium.BillboardCollection()
-    );
-
-const asteroidBillboards =
-    viewer.scene.primitives.add(
-        new Cesium.BillboardCollection()
-    );
-
-const asteroidOrbits =
-    viewer.scene.primitives.add(
-        new Cesium.PolylineCollection()
-    );
+asteroidBillboards.show = false;
+asteroidOrbits.show = false;
 
 const objectBillboardMap = new Map();
 const asteroidBillboardMap = new Map();
+
+const SATELLITE_SCALE_BY_DIST = new Cesium.NearFarScalar(1.5e6, 1.5, 3.0e7, 0.95);
 
 let currentSatellites = [];
 let currentAsteroids = [];
 let selectedId = null;
 
 const categoryInfo = {
-    satellite: {
-        label: "Satellite",
-        color: "#35d7ff",
-        symbol: "🛰️"
-    },
-    station: {
-        label: "Space Station",
-        color: "#4dffb0",
-        symbol: "✚"
-    },
-    rocket_body: {
-        label: "Rocket Body",
-        color: "#ffb547",
-        symbol: "🚀"
-    },
-    debris: {
-        label: "Debris",
-        color: "#ff354f",
-        symbol: "◆"
-    },
-    asteroid: {
-        label: "Heliocentric Asteroid",
-        color: "#c39aff",
-        symbol: "☄️"
-    },
-    unknown: {
-        label: "Unknown",
-        color: "#b5a8ff",
-        symbol: "⬡"
-    }
+    satellite:   { label: "Satellite",             color: "#0284c7", symbol: "🛰️", size: 26 },
+    station:     { label: "Space Station",         color: "#059669", symbol: "🏛️", size: 38 },
+    rocket_body: { label: "Rocket Body",           color: "#d97706", symbol: "🚀", size: 30 },
+    debris:      { label: "Debris",                color: "#e11d48", symbol: "◆",  size: 18 },
+    asteroid:    { label: "Heliocentric Asteroid", color: "#7e22ce", symbol: "☄️", size: 32 },
+    unknown:     { label: "Unknown",               color: "#475569", symbol: "⬡",  size: 20 }
 };
 
 function escapeHTML(value) {
     return String(value ?? "").replace(/[&<>"']/g, c => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;"
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
     })[c]);
+}
+
+function inferMissionPurpose(sat) {
+    if (sat.mission_purpose) return sat.mission_purpose;
+
+    const name = String(sat.name || "").toUpperCase();
+    const cat = sat.category;
+    const alt = sat.altitude_km || 0;
+
+    if (cat === "station" || name.startsWith("ISS") || name.startsWith("CSS") || name === "POISK") {
+        return "Crewed Orbital Space Station — Microgravity research, human spaceflight & orbital laboratory";
+    }
+    if (cat === "rocket_body") {
+        return "Spent Launch Vehicle Stage — Upper rocket stage remaining in orbit after payload deployment";
+    }
+    if (cat === "debris") {
+        return "Orbital Debris / Fragment — Non-functional space object tracked for collision avoidance";
+    }
+    if (/STARLINK|ONEWEB|KUIPER|IRIDIUM|GLOBALSTAR|ORBCOMM|O3B|QIANFAN/.test(name)) {
+        return "Satellite Internet & Telecom Constellation — Low-latency global broadband & data relay";
+    }
+    if (/INTELSAT|EUTELSAT|ASTRA|DIRECTV|ECHOSTAR|SES-|GSAT|INSAT|ASIASAT|JCSAT|TURKSAT|HISPASAT|TELSTAR|GALAXY|SKYNET|VIASAT|INMARSAT|CHINASAT|EXPRESS|YAMAL|THAICOM|MEASAT|ARABSAT|BADR|NILESAT/.test(name)) {
+        return "TV Signal, DTH Broadcasting & Communications — Geostationary television, radio & telecom relay";
+    }
+    if (/GPS|NAVSTAR|GLONASS|GALILEO|BEIDOU|IRNSS|QZS-|MICHIBIKI/.test(name)) {
+        return "Satellite Navigation & Positioning (GNSS) — Global positioning, navigation & atomic clock timing";
+    }
+    if (/GOES|METEOSAT|HIMAWARI|FENGYUN|NOAA|METEOR|METOP|ELEKTRO|SUOMI/.test(name)) {
+        return "Weather & Climate Monitoring — Atmospheric imaging, storm tracking & meteorological forecasting";
+    }
+    if (/SENTINEL|LANDSAT|WORLDVIEW|CARTOSAT|RESOURCESAT|GAOFEN|YAOGAN|SPOT|PLEIADES|COSMO-SKYMED|TERRASAR|RADARSAT|ICESAT|AQUA|TERRA|AURA|JASON|CRYOSAT|SMOS/.test(name)) {
+        return "Earth Observation & Remote Sensing — High-resolution mapping, agriculture, disaster & environmental monitoring";
+    }
+    if (/HST|HUBBLE|CHANDRA|CXO|XMM|NUSTAR|FERMI|FGRST|SWIFT|TESS|CHEOPS|DAMPE|ASTRO/.test(name)) {
+        return "Space Telescope & Astrophysics — Deep-space astronomical observation & cosmic radiation research";
+    }
+    if (/USA |COSMOS |SBIRS|WGS|AEHF|MUOS|MILSTAR|TDRS|LUCH|TIANLIAN/.test(name)) {
+        return "Government / Defense / Data Relay — Secure communications, early warning or spacecraft telemetry relay";
+    }
+    if (alt >= 34000 && alt <= 37000) {
+        return "Geostationary Orbit Payload — TV broadcasting, regional communications or weather monitoring";
+    }
+    if (alt >= 18000 && alt <= 25000) {
+        return "Medium Earth Orbit (MEO) Payload — Navigation, timing or medium-orbit communications";
+    }
+    return "Active Earth-Orbiting Satellite — Technology demonstration, scientific research or communications";
+}
+
+function toggleCatalogDrawer() {
+    const drawer = document.getElementById("catalogDrawer");
+    const arrow = document.getElementById("catalogArrow");
+    const isOpen = drawer.classList.toggle("open");
+    arrow.textContent = isOpen ? "▲" : "▼";
+}
+
+function openObjectPopup(titleHtml, bodyHtml) {
+    document.getElementById("popupTitle").innerHTML = titleHtml;
+    document.getElementById("popupBody").innerHTML = bodyHtml;
+    document.getElementById("objectPopup").classList.add("open");
+}
+
+function closeObjectPopup() {
+    document.getElementById("objectPopup").classList.remove("open");
+    selectedLabel.label.show = false;
+    selectedOrbitTrack.removeAll();
+    viewer.scene.requestRender();
 }
 
 function navigateFeature(targetId, button) {
@@ -739,12 +1048,12 @@ function navigateFeature(targetId, button) {
 
     if (targetId === "earthFeature") {
         panel.classList.remove("open");
-        resetCamera();
+        showEarthMode();
         return;
     }
 
     if (targetId === "asteroidFeature") {
-        focusSunAndAsteroids();
+        showAsteroidMode();
     }
 
     const target = document.getElementById(targetId);
@@ -754,7 +1063,10 @@ function navigateFeature(targetId, button) {
     const title = target.querySelector("h3")?.textContent || "ORBITAL INTELLIGENCE";
     document.getElementById("featurePanelTitle").textContent = title;
     panel.scrollTop = 0;
-    if (targetId === "classificationFeature" && typeof renderCategoryStats === "function") renderCategoryStats();
+
+    if (targetId === "classificationFeature" && typeof renderCategoryStats === "function") {
+        renderCategoryStats();
+    }
     if (featureLoaders[targetId]) loadFeature(targetId);
 }
 
@@ -782,67 +1094,57 @@ function makeSymbolImage(category, selected = false) {
 }
 
 function buildSymbolImage(category, selected = false) {
-    const info = categoryInfo[category] || categoryInfo.unknown;
-
-    const color = selected ? "#fff36b" : info.color;
-
-    let shape = "";
-
-    if (category === "satellite") {
-        shape = `<text x="20" y="29"
-            text-anchor="middle" font-size="32">🛰️</text>`;
-
-    } else if (category === "rocket_body") {
-        shape = `<text x="20" y="29"
-            text-anchor="middle" font-size="32">🚀</text>`;
-
-    } else if (category === "asteroid") {
-        shape = `<text x="20" y="29"
-            text-anchor="middle" font-size="30">☄️</text>`;
-
-    } else if (category === "sun") {
+    if (category === "sun") {
         const sunSvg = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+            <svg xmlns="http://www.w3.org/2000/svg" width="84" height="84" viewBox="0 0 84 84">
                 <defs>
                     <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
                         <stop offset="0%" stop-color="#ffffff"/>
-                        <stop offset="32%" stop-color="#fff176"/>
-                        <stop offset="65%" stop-color="#ff9800" stop-opacity="0.85"/>
-                        <stop offset="100%" stop-color="#ff5722" stop-opacity="0"/>
+                        <stop offset="30%" stop-color="#fef08a"/>
+                        <stop offset="65%" stop-color="#f59e0b" stop-opacity="0.75"/>
+                        <stop offset="100%" stop-color="#ea580c" stop-opacity="0"/>
                     </radialGradient>
                 </defs>
-                <circle cx="48" cy="48" r="46" fill="url(#sunGlow)"/>
-                <circle cx="48" cy="48" r="20" fill="#fff59d" stroke="#ffb300" stroke-width="2"/>
+                <circle cx="42" cy="42" r="40" fill="url(#sunGlow)"/>
+                <circle cx="42" cy="42" r="16" fill="#fef9c3" stroke="#d97706" stroke-width="2"/>
             </svg>`;
         return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(sunSvg);
-
-    } else if (category === "station") {
-        shape = `<path d="M15 3h10v12h12v10H25v12H15V25H3V15h12z"
-            fill="${color}" stroke="#071522" stroke-width="2"/>`;
-
-    } else if (category === "debris") {
-        shape = `<polygon points="7,3 30,5 37,17 25,22 34,36 11,38 3,24 9,16"
-            fill="#ff354f" stroke="#ff9aa5" stroke-width="2"/>`;
-
-    } else {
-        shape = `<polygon points="12,3 28,3 37,20 28,37 12,37 3,20"
-            fill="${color}" stroke="#071522" stroke-width="2"/>
-            <text x="20" y="26" text-anchor="middle"
-            font-size="17" fill="#071522">?</text>`;
     }
 
-    const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg"
-             width="40" height="40" viewBox="0 0 40 40">
-            ${selected
-                ? '<circle cx="20" cy="20" r="19" fill="none" stroke="#fff36b" stroke-width="2"/>'
-                : ''}
-            ${shape}
-        </svg>
-    `;
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext("2d");
 
-    return "data:image/svg+xml;charset=utf-8," +
-        encodeURIComponent(svg);
+    const info = categoryInfo[category] || categoryInfo.unknown;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = "transparent";
+
+    if (category === "satellite") {
+        ctx.font = "38px 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif";
+        ctx.fillText("🛰️", 32, 33);
+    } else if (category === "station") {
+        ctx.font = "44px 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif";
+        ctx.fillText("🏛️", 32, 33);
+    } else if (category === "rocket_body") {
+        ctx.font = "40px 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif";
+        ctx.fillText("🚀", 32, 33);
+    } else if (category === "debris") {
+        ctx.fillStyle = selected ? "#ca8a04" : "#be123c";
+        ctx.font = "bold 32px Arial, sans-serif";
+        ctx.fillText("◆", 32, 33);
+    } else if (category === "asteroid") {
+        ctx.font = "40px 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif";
+        ctx.fillText("☄️", 32, 33);
+    } else {
+        ctx.fillStyle = selected ? "#ca8a04" : "#475569";
+        ctx.font = "bold 32px Arial, sans-serif";
+        ctx.fillText("⬡", 32, 33);
+    }
+
+    return canvas.toDataURL("image/png");
 }
 
 const selectedLabel = viewer.entities.add({
@@ -850,19 +1152,54 @@ const selectedLabel = viewer.entities.add({
     label: {
         text: "",
         show: false,
-        font: "14px Arial",
-        fillColor: Cesium.Color.YELLOW,
+        font: "bold 14px 'Segoe UI', Arial, sans-serif",
+        fillColor: Cesium.Color.fromCssColorString("#fde047"),
         outlineColor: Cesium.Color.BLACK,
         outlineWidth: 3,
         style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        pixelOffset: new Cesium.Cartesian2(12, -15)
+        pixelOffset: new Cesium.Cartesian2(14, -14)
     }
 });
 
-// ==========================================
-// 5b. HELIOCENTRIC KEPLERIAN MATH (SUN + ASTEROIDS)
-// ==========================================
+function drawSelectedSatelliteOrbit(sat) {
+    selectedOrbitTrack.removeAll();
+    const altMeters = (sat.altitude_km || 500) * 1000;
+    const radius = 6378137 + altMeters;
+    const incRad = ((sat.inclination_deg || 0) * Math.PI) / 180;
+    const latRad = ((sat.latitude || 0) * Math.PI) / 180;
+    const lonRad = ((sat.longitude || 0) * Math.PI) / 180;
 
+    const sinArg = Math.abs(Math.sin(incRad)) > 1e-4
+        ? Math.max(-1, Math.min(1, Math.sin(latRad) / Math.sin(incRad)))
+        : 0;
+    const u0 = Math.asin(sinArg);
+    const raan = lonRad - Math.atan2(Math.cos(incRad) * Math.sin(u0), Math.cos(u0));
+
+    const pts = [];
+    for (let deg = 0; deg <= 360; deg += 4) {
+        const u = (deg * Math.PI) / 180;
+        const xOrb = radius * Math.cos(u);
+        const yOrb = radius * Math.sin(u);
+
+        const x = Math.cos(raan) * xOrb - Math.sin(raan) * Math.cos(incRad) * yOrb;
+        const y = Math.sin(raan) * xOrb + Math.cos(raan) * Math.cos(incRad) * yOrb;
+        const z = Math.sin(incRad) * yOrb;
+        pts.push(new Cesium.Cartesian3(x, y, z));
+    }
+
+    selectedOrbitTrack.add({
+        positions: pts,
+        width: 2.0,
+        material: Cesium.Material.fromType("Color", {
+            color: Cesium.Color.fromCssColorString("#fde047").withAlpha(0.75)
+        })
+    });
+}
+
+
+// ============================================================================
+// 6. HELIOCENTRIC KEPLERIAN ORBIT ENGINE (SUN + 25 ASTEROIDS)
+// ============================================================================
 function solveKepler(M_rad, e) {
     let E = M_rad;
     for (let iter = 0; iter < 8; iter++) {
@@ -883,11 +1220,9 @@ function heliocentricOffset(a_au, e, i_deg, om_deg, w_deg, ma_deg) {
     const sinE = Math.sin(E);
     const sqrt1e2 = Math.sqrt(Math.max(0, 1 - (e || 0) * (e || 0)));
 
-    // Position in orbital plane (AU)
     const xOrb = a_au * (cosE - (e || 0));
     const yOrb = a_au * sqrt1e2 * sinE;
 
-    // Rotate by w, i, om to heliocentric ecliptic coordinates (AU)
     const cosOm = Math.cos(om), sinOm = Math.sin(om);
     const cosW = Math.cos(w), sinW = Math.sin(w);
     const cosI = Math.cos(i), sinI = Math.sin(i);
@@ -906,42 +1241,38 @@ function renderSunAndOrbits(asteroids) {
 
     const sunPos = getSunVisualPosition();
 
-    // 1. Add Glowing Sun
     asteroidBillboards.add({
         position: sunPos,
         image: makeSymbolImage("sun", false),
-        width: 72,
-        height: 72,
+        width: 64,
+        height: 64,
         verticalOrigin: Cesium.VerticalOrigin.CENTER,
-        id: { _isSun: true, name: "SUN (Solar System Center)" }
+        id: { _isSun: true, name: "SUN" }
     });
 
-    // Sun Label
     viewer.entities.removeById("sunLabelEntity");
     viewer.entities.add({
         id: "sunLabelEntity",
+        show: activeViewMode === "asteroid",
         position: sunPos,
         label: {
-            text: "☀️ SUN",
-            font: "bold 13px Arial",
-            fillColor: Cesium.Color.fromCssColorString("#ffe066"),
+            text: "SUN",
+            font: "bold 12px 'Consolas', monospace",
+            fillColor: Cesium.Color.fromCssColorString("#fef08a"),
             outlineColor: Cesium.Color.BLACK,
             outlineWidth: 3,
             style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-            pixelOffset: new Cesium.Cartesian2(0, -40)
+            pixelOffset: new Cesium.Cartesian2(0, -34)
         }
     });
 
-    // 2. Earth Reference Orbit Ring around the Sun (1 AU radius)
     const earthRingPts = [];
     const sunDir = Cesium.Cartesian3.normalize(sunPos, new Cesium.Cartesian3());
     const refUp = Math.abs(sunDir.z) < 0.9 ? new Cesium.Cartesian3(0, 0, 1) : new Cesium.Cartesian3(1, 0, 0);
     const basisU = Cesium.Cartesian3.normalize(Cesium.Cartesian3.cross(refUp, sunDir, new Cesium.Cartesian3()), new Cesium.Cartesian3());
-    const basisV = Cesium.Cartesian3.cross(sunDir, basisU, new Cesium.Cartesian3());
 
     for (let deg = 0; deg <= 360; deg += 5) {
         const rad = (deg * Math.PI) / 180;
-        // At deg = 0, point passes directly through Earth (origin 0,0,0)
         const p = Cesium.Cartesian3.add(
             sunPos,
             Cesium.Cartesian3.add(
@@ -955,13 +1286,12 @@ function renderSunAndOrbits(asteroids) {
     }
     asteroidOrbits.add({
         positions: earthRingPts,
-        width: 1.5,
+        width: 1.4,
         material: Cesium.Material.fromType("Color", {
-            color: Cesium.Color.fromCssColorString("#27d9ed").withAlpha(0.45)
+            color: Cesium.Color.fromCssColorString("#38bdf8").withAlpha(0.45)
         })
     });
 
-    // 3. Plot all 25 Asteroids + their Heliocentric Elliptical Orbits around the Sun
     currentAsteroids = asteroids || [];
     currentAsteroids.forEach((ast, idx) => {
         const a = ast.semi_major_axis_au || 1.2;
@@ -975,7 +1305,6 @@ function renderSunAndOrbits(asteroids) {
         const position = Cesium.Cartesian3.add(sunPos, offset, new Cesium.Cartesian3());
         const astId = "AST-" + idx;
 
-        // Draw Asteroid Orbit Path around Sun
         const orbitPts = [];
         for (let mDeg = 0; mDeg <= 360; mDeg += 10) {
             const ptOffset = heliocentricOffset(a, e, inc, om, w, mDeg);
@@ -985,21 +1314,16 @@ function renderSunAndOrbits(asteroids) {
             positions: orbitPts,
             width: 1.0,
             material: Cesium.Material.fromType("Color", {
-                color: Cesium.Color.fromCssColorString("#c39aff").withAlpha(0.28)
+                color: Cesium.Color.fromCssColorString("#c084fc").withAlpha(0.28)
             })
         });
 
-        const astObj = {
-            ...ast,
-            _isAsteroid: true,
-            _astId: astId
-        };
-
+        const astObj = { ...ast, _isAsteroid: true, _astId: astId };
         const billboard = asteroidBillboards.add({
             position: position,
             image: makeSymbolImage("asteroid", selectedId === astId),
-            width: selectedId === astId ? 32 : 24,
-            height: selectedId === astId ? 32 : 24,
+            width: selectedId === astId ? 40 : 30,
+            height: selectedId === astId ? 40 : 30,
             verticalOrigin: Cesium.VerticalOrigin.CENTER,
             id: astObj
         });
@@ -1012,73 +1336,43 @@ function renderSunAndOrbits(asteroids) {
 }
 
 
-// ==========================================
-// 6. CATEGORY COUNTS
-// ==========================================
-
+// ============================================================================
+// 7. FORMATTING HELPERS & FEATURE PANEL RENDERERS
+// ============================================================================
 function renderCategoryStats() {
     const container = document.getElementById("categoryStats");
-
     const counts = {};
-
-    Object.keys(categoryInfo).forEach(category => {
-        counts[category] = 0;
-    });
+    Object.keys(categoryInfo).forEach(category => { counts[category] = 0; });
 
     currentSatellites.forEach(sat => {
-        const category = categoryInfo[sat.category]
-            ? sat.category
-            : "unknown";
-
+        const category = categoryInfo[sat.category] ? sat.category : "unknown";
         counts[category]++;
     });
-
     counts.asteroid = currentAsteroids.length;
 
-    container.innerHTML = Object.entries(categoryInfo).map(
-        ([key, info]) => `
-            <div class="category-row">
-                <div class="category-left">
-                    <span class="legend-shape"
-                        style="background:${info.color};clip-path:${
-                            key === "satellite"
-                            ? "polygon(50% 0,100% 50%,50% 100%,0 50%)"
-                            : key === "station"
-                            ? "polygon(35% 0,65% 0,65% 35%,100% 35%,100% 65%,65% 65%,65% 100%,35% 100%,35% 65%,0 65%,0 35%,35% 35%)"
-                            : key === "rocket_body"
-                            ? "polygon(50% 0,100% 100%,0 100%)"
-                            : key === "debris"
-                            ? "polygon(15% 0,85% 0,100% 70%,50% 100%,0 70%)"
-                            : key === "asteroid"
-                            ? "circle(50% at 50% 50%)"
-                            : "polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)"
-                        }"></span>
-                    ${info.label}
-                </div>
-                <strong>${counts[key].toLocaleString()}</strong>
+    container.innerHTML = Object.entries(categoryInfo).map(([key, info]) => `
+        <div class="category-row">
+            <div class="category-left">
+                <span class="legend-shape" style="background:${info.color};box-shadow:0 0 8px ${info.color};"></span>
+                ${info.label}
             </div>
-        `
-    ).join("");
+            <strong style="font-family:var(--font-mono);color:${info.color}">${counts[key].toLocaleString()}</strong>
+        </div>
+    `).join("");
 }
 
 function fmtNum(value) {
-    return (typeof value === "number" && Number.isFinite(value))
-        ? value.toLocaleString()
-        : "DATA UNAVAILABLE";
+    return (typeof value === "number" && Number.isFinite(value)) ? value.toLocaleString() : "DATA UNAVAILABLE";
 }
 
 function fmtUnit(value, unit) {
-    return (value === null || value === undefined || value === "")
-        ? "Unavailable"
-        : `${value}${unit}`;
+    return (value === null || value === undefined || value === "") ? "Unavailable" : `${value}${unit}`;
 }
 
 function fmtTime(isoText) {
     if (!isoText) return "unknown time";
     const d = new Date(isoText);
-    return Number.isNaN(d.getTime())
-        ? "unknown time"
-        : d.toISOString().replace("T", " ").slice(0, 16) + " UTC";
+    return Number.isNaN(d.getTime()) ? "unknown time" : d.toISOString().replace("T", " ").slice(0, 16) + " UTC";
 }
 
 function fmtAge(minutes) {
@@ -1093,8 +1387,7 @@ function describeSource(info) {
         return "UNAVAILABLE" + (info && info.last_error ? ` (${info.last_error})` : "");
     }
     const flag = info.status === "local_backup" ? "BACKUP - NOT LIVE: " : "";
-    const epoch = info.tle_epoch_newest
-        ? `; newest TLE epoch ${fmtTime(info.tle_epoch_newest)}` : "";
+    const epoch = info.tle_epoch_newest ? `; newest TLE epoch ${fmtTime(info.tle_epoch_newest)}` : "";
     return `${flag}${info.label}, obtained ${fmtTime(info.data_obtained_at)} (${fmtAge(info.age_minutes)})${epoch}`;
 }
 
@@ -1104,21 +1397,16 @@ function kv(label, value) {
 
 function barRow(label, value, max) {
     const width = max > 0 ? Math.max(1, Math.round(value / max * 100)) : 0;
-    return `<div class="bar-row">${escapeHTML(label)}: <b>${value.toLocaleString()}</b>
+    return `<div class="bar-row">${escapeHTML(label)}: <b style="font-family:var(--font-mono)">${value.toLocaleString()}</b>
         <div class="bar"><i style="width:${value > 0 ? width : 0}%"></i></div></div>`;
 }
 
 function renderDataQuality(data) {
-
     if (!data) return;
-
     const consistent = data.counts_consistent !== false;
-
     const statusEl = document.getElementById("qualityStatus");
     statusEl.className = "screening-state";
-    statusEl.textContent = consistent
-        ? "DATA QUALITY REPORT UPDATED"
-        : "COUNT MISMATCH: unique objects != calculated + failed";
+    statusEl.textContent = consistent ? "DATA QUALITY REPORT UPDATED" : "COUNT MISMATCH";
 
     document.getElementById("qualityTLE").textContent = fmtNum(data.tle_objects);
     document.getElementById("qualityMatches").textContent = fmtNum(data.metadata_matches);
@@ -1126,11 +1414,8 @@ function renderDataQuality(data) {
     document.getElementById("qualityUnmatched").textContent = fmtNum(data.metadata_unmatched);
     document.getElementById("qualityUnknown").textContent = fmtNum(data.unknown_classifications);
     document.getElementById("qualityMissing").textContent = fmtNum(data.missing_owner_metadata);
-
     document.getElementById("qualityPercent").textContent =
-        typeof data.metadata_match_percent === "number"
-            ? `${data.metadata_match_percent}%`
-            : "DATA UNAVAILABLE";
+        typeof data.metadata_match_percent === "number" ? `${data.metadata_match_percent}%` : "DATA UNAVAILABLE";
 
     const failed = data.failed_positions || [];
     const feedRecords = Object.entries(data.records_by_feed || {})
@@ -1140,14 +1425,14 @@ function renderDataQuality(data) {
         ${kv("Raw feed records", fmtNum(data.raw_feed_records))}
         ${kv("Records per feed", feedRecords || "n/a")}
         ${kv("Unique objects (NORAD IDs)", fmtNum(data.unique_valid_objects))}
-        ${kv("IDs present in more than one feed", fmtNum(data.duplicate_ids_across_feeds))}
+        ${kv("IDs in multiple feeds", fmtNum(data.duplicate_ids_across_feeds))}
         ${kv("Malformed TLE records rejected", fmtNum(data.malformed_records_rejected))}
         ${kv("Positions not calculated", fmtNum(data.positions_not_calculated))}
-        ${kv("Unknown: no metadata record", fmtNum(data.unknown_no_metadata_record))}
-        ${kv("Unknown: SATCAT type is UNK", fmtNum(data.unknown_metadata_type_unk))}
-        ${kv("Owner: no metadata record", fmtNum(data.owner_missing_no_metadata_record))}
+        ${kv("Unknown: no metadata", fmtNum(data.unknown_no_metadata_record))}
+        ${kv("Unknown: type UNK", fmtNum(data.unknown_metadata_type_unk))}
+        ${kv("Owner: no metadata", fmtNum(data.owner_missing_no_metadata_record))}
         ${kv("Owner: blank in metadata", fmtNum(data.owner_blank_in_metadata))}
-        ${failed.length ? `<div class="fail-list"><b>Position failures (actual reason):</b><br>${
+        ${failed.length ? `<div class="fail-list"><b>Position failures:</b><br>${
             failed.map(f => `${escapeHTML(f.name)} [${escapeHTML(f.norad_id)}]: ${escapeHTML(f.reason)}`).join("<br>")
         }</div>` : ""}
     `;
@@ -1157,51 +1442,41 @@ function renderDataQuality(data) {
     Object.entries(feeds).forEach(([group, info]) => {
         lines.push(`${group}: ${describeSource(info)}`);
     });
-
-    document.getElementById("qualitySources").innerHTML =
-        lines.map(escapeHTML).join("<br>");
+    document.getElementById("qualitySources").innerHTML = lines.map(escapeHTML).join("<br>");
 }
 
 function renderDataQualityError(message) {
     const statusEl = document.getElementById("qualityStatus");
     statusEl.className = "state-error";
     statusEl.textContent = "DATA ERROR: " + message;
-    ["qualityTLE", "qualityMatches", "qualityPositions",
-     "qualityUnmatched", "qualityUnknown", "qualityMissing"]
-        .forEach(id => { document.getElementById(id).textContent = "DATA UNAVAILABLE"; });
-    document.getElementById("qualityPercent").textContent = "DATA UNAVAILABLE";
-    document.getElementById("qualityDetails").innerHTML = "";
 }
 
 
-// ==========================================
-// 6b. API-DRIVEN FEATURE PANELS
-// ==========================================
-
+// ============================================================================
+// 8. API-DRIVEN FEATURE LOADERS
+// ============================================================================
 let lastSatelliteResult = null;
 let cachedAsteroidData = null;
 const featureRequestToken = {};
 
 const featureLoaders = {
-    asteroidFeature:     { url: "/api/asteroids",      body: "asteroidBody",    render: renderAsteroids },
-    healthFeature:       { url: "/api/health",         body: "healthBody",      render: renderHealth },
-    congestionFeature:   { url: "/api/congestion",     body: "congestionBody",  render: renderCongestion },
-    intelligenceFeature: { url: "/api/asteroids",      body: "intelligenceBody", render: renderIntelligence, handlesUnavailable: true },
-    historyFeature:      { url: "/api/history",        body: "historyBody",     render: renderHistory }
+    asteroidFeature:     { url: "/api/asteroids",  body: "asteroidBody",     render: renderAsteroids },
+    healthFeature:       { url: "/api/health",     body: "healthBody",       render: renderHealth },
+    congestionFeature:   { url: "/api/congestion", body: "congestionBody",   render: renderCongestion },
+    intelligenceFeature: { url: "/api/asteroids",  body: "intelligenceBody", render: renderIntelligence, handlesUnavailable: true },
+    historyFeature:      { url: "/api/history",    body: "historyBody",      render: renderHistory }
 };
 
 function unavailableHTML(json) {
     return `<div class="screening-box">
         <div class="state-unavailable">DATA UNAVAILABLE</div>
         <p class="note">${escapeHTML(json.reason || "No reliable data source is connected.")}</p>
-        ${json.note ? `<p class="note">${escapeHTML(json.note)}</p>` : ""}
     </div>`;
 }
 
 async function loadFeature(targetId) {
     const cfg = featureLoaders[targetId];
     if (!cfg) return;
-
     const body = document.getElementById(cfg.body);
     if (!body) return;
 
@@ -1220,7 +1495,6 @@ async function loadFeature(targetId) {
     try {
         const response = await fetch(cfg.url, { cache: "no-store" });
         const json = await response.json().catch(() => null);
-
         if (featureRequestToken[targetId] !== token) return;
 
         if (!response.ok || !json || json.success === false) {
@@ -1233,17 +1507,13 @@ async function loadFeature(targetId) {
         }
 
         body.className = "";
-
         if (json.available === false && !cfg.handlesUnavailable) {
             body.innerHTML = unavailableHTML(json);
             return;
         }
-
         body.innerHTML = cfg.render(json);
-
     } catch (error) {
         if (featureRequestToken[targetId] !== token) return;
-        console.error(targetId + " load error:", error);
         body.className = "";
         body.innerHTML = `<div class="state-error">DATA ERROR</div>
             <p class="note">${escapeHTML(error.message)}</p>
@@ -1255,21 +1525,15 @@ function selectAsteroid(astId) {
     const entry = asteroidBillboardMap.get(astId);
     if (!entry) return;
 
-    selectedId = astId;
-
-    for (const [key, billboard] of objectBillboardMap) {
-        const object = currentSatellites.find(item => satelliteKey(item) === key);
-        if (object) {
-            billboard.image = makeSymbolImage(object.category, false);
-            billboard.width = 23;
-            billboard.height = 23;
-        }
+    if (activeViewMode !== "asteroid") {
+        showAsteroidMode();
     }
 
+    selectedId = astId;
     for (const [key, item] of asteroidBillboardMap) {
         item.billboard.image = makeSymbolImage("asteroid", key === astId);
-        item.billboard.width = key === astId ? 34 : 24;
-        item.billboard.height = key === astId ? 34 : 24;
+        item.billboard.width = key === astId ? 40 : 30;
+        item.billboard.height = key === astId ? 40 : 30;
     }
 
     const ast = entry.astObj;
@@ -1282,33 +1546,26 @@ function selectAsteroid(astId) {
         ? Math.round(moidAu * 149597870.7).toLocaleString() + " km"
         : "Unavailable";
 
-    const details = document.getElementById("details");
-    details.style.display = "block";
-    details.innerHTML = `
-        <strong style="color:#c39aff">☄️ ${escapeHTML(ast.name || "Unnamed Asteroid")}</strong>
-        <br><b>Category:</b> Potentially Hazardous Asteroid (PHA)
-        <br><b>Orbit Type:</b> Heliocentric (Orbits the Sun)
-        <br><b>Earth MOID:</b> ${moidAu === null ? "Unavailable" : moidAu.toFixed(6) + " AU"} (${moidKm})
-        <br><b>Diameter:</b> ${ast.diameter_km === null ? "Not measured" : ast.diameter_km + " km"}
-        <br><b>Abs. Magnitude (H):</b> ${fmtUnit(ast.abs_magnitude_h, "")}
-
-        <div class="panel-divider"></div>
-
-        <b>HELIOCENTRIC ELEMENTS</b>
-        <br>Semi-major Axis: ${fmtUnit(ast.semi_major_axis_au === null ? null : ast.semi_major_axis_au.toFixed(4), " AU")}
-        <br>Eccentricity: ${fmtUnit(ast.eccentricity === null ? null : ast.eccentricity.toFixed(4), "")}
-        <br>Inclination: ${fmtUnit(ast.inclination_deg === null ? null : ast.inclination_deg.toFixed(3), "°")}
-        <br>Ascending Node (Ω): ${fmtUnit(ast.ascending_node_deg === null ? null : ast.ascending_node_deg.toFixed(2), "°")}
-        <br>Arg. Perihelion (ω): ${fmtUnit(ast.arg_perihelion_deg === null ? null : ast.arg_perihelion_deg.toFixed(2), "°")}
-
-        <div class="panel-divider"></div>
-
-        <span class="note">
-            Source: NASA/JPL Small-Body Database<br>
-            Heliocentric orbit plotted around the Sun.
-        </span>
+    const titleHtml = `
+        <strong style="color:#c084fc;font-size:14px;">☄️ ${escapeHTML(ast.name || "Unnamed Asteroid")}</strong>
+        <div style="font-size:10px;color:#94a3b8;margin-top:2px;">POTENTIALLY HAZARDOUS ASTEROID (PHA)</div>
     `;
 
+    const bodyHtml = `
+        <div class="purpose-badge" style="border-left-color:#c084fc;">
+            <span style="color:#c084fc;">MISSION & PURPOSE</span>
+            Heliocentric Near-Earth Asteroid tracked for planetary defense & orbital trajectory monitoring around the Sun.
+        </div>
+        ${kv("Minimum Orbit Distance (MOID)", moidAu === null ? "Unavailable" : `${moidKm} (${moidAu.toFixed(6)} AU)`)}
+        ${kv("Estimated Diameter", ast.diameter_km === null ? "Not measured" : ast.diameter_km + " km")}
+        ${kv("Absolute Magnitude (H)", fmtUnit(ast.abs_magnitude_h, ""))}
+        ${kv("Semi-major Axis (a)", fmtUnit(ast.semi_major_axis_au === null ? null : ast.semi_major_axis_au.toFixed(4), " AU"))}
+        ${kv("Eccentricity (e)", fmtUnit(ast.eccentricity === null ? null : ast.eccentricity.toFixed(4), ""))}
+        ${kv("Orbital Inclination (i)", fmtUnit(ast.inclination_deg === null ? null : ast.inclination_deg.toFixed(3), "°"))}
+        ${kv("Data Source", "NASA / JPL Small-Body Database")}
+    `;
+
+    openObjectPopup(titleHtml, bodyHtml);
     viewer.scene.requestRender();
 }
 
@@ -1333,25 +1590,18 @@ function renderAsteroids(json) {
         const astId = "AST-" + idx;
         return `
         <div class="screening-box" style="cursor:pointer" onclick="selectAsteroid('${astId}')">
-            <strong style="color:#c39aff;font-size:12px;">☄️ ${escapeHTML(a.name || "Unnamed")}</strong>
-            ${kv("Earth MOID (AU)", moidAu === null ? "Unavailable" : moidAu.toFixed(6) + " AU")}
-            ${kv("Earth MOID (km)", moidKm)}
+            <strong style="color:#c084fc;font-size:12px;">☄️ ${escapeHTML(a.name || "Unnamed")}</strong>
+            ${kv("Earth MOID", `${moidKm} (${moidAu === null ? "n/a" : moidAu.toFixed(5) + " AU"})`)}
             ${kv("Semi-major axis", fmtUnit(a.semi_major_axis_au === null ? null : a.semi_major_axis_au.toFixed(4), " AU"))}
-            ${kv("Eccentricity", fmtUnit(a.eccentricity === null ? null : a.eccentricity.toFixed(4), ""))}
             ${kv("Inclination", fmtUnit(a.inclination_deg === null ? null : a.inclination_deg.toFixed(3), "°"))}
-            ${kv("Abs. magnitude H", fmtUnit(a.abs_magnitude_h, ""))}
             ${kv("Diameter", a.diameter_km === null ? "Not measured" : a.diameter_km + " km")}
         </div>`;
     }).join("");
 
     return `
         <div class="screening-box">
-            <div class="screening-state">☀️ HELIOCENTRIC SOLAR SYSTEM LAYER (${list.length} PHAs)</div>
-            ${kv("Source", json.source)}
-            ${kv("Obtained", fmtTime(json.data_obtained_at) + " (" + fmtAge(json.age_minutes) + ")")}
-            ${kv("Orbit type", json.orbit_type)}
-            <p class="note">${escapeHTML(json.selection)}</p>
-            <p class="note">☀️ Sun, Earth's 1 AU orbit (cyan ring), and all 25 Asteroid orbits (purple paths) are rendered in 3D space.</p>
+            <div class="screening-state">HELIOCENTRIC VIEW ACTIVE (${list.length} PHAs)</div>
+            <p class="note">Earth satellites are hidden in this view so Sun, Earth's 1 AU orbit, and Asteroid trajectories are clearly visible.</p>
         </div>${rows}`;
 }
 
@@ -1361,7 +1611,7 @@ function renderHealth(json) {
         .map(([k, v]) => `${k}: ${v.toLocaleString()}`).join(", ");
     return `
         <div class="screening-box">
-            <div class="screening-state">SCORE: ${escapeHTML(json.score_status)}</div>
+            <div class="screening-state">${escapeHTML(json.score_status)}</div>
             <p class="note">${escapeHTML(json.score_reason)}</p>
         </div>
         <h3>MEASURED METRICS</h3>
@@ -1372,9 +1622,7 @@ function renderHealth(json) {
         ${kv("TLE epoch median age", fmtUnit(m.tle_epoch_median_age_days, " days"))}
         ${kv("TLE epochs older than 7 days", fmtUnit(m.tle_epoch_older_than_7_days_percent, "%"))}
         ${kv("Metadata coverage", fmtUnit(m.metadata_coverage_percent, "%"))}
-        <p class="note">${escapeHTML(json.scope_note)}</p>
-        <p class="note">${escapeHTML(json.method)}</p>
-        <p class="note">Generated ${escapeHTML(fmtTime(json.generated_at))}</p>`;
+        <p class="note">${escapeHTML(json.scope_note)}</p>`;
 }
 
 function renderCongestion(json) {
@@ -1395,8 +1643,7 @@ function renderCongestion(json) {
         ${Object.keys(names).map(k => barRow(names[k], regimes[k] || 0, max)).join("")}
         <h3>LEO ALTITUDE SHELLS (100 km)</h3>
         ${bins.map(b => barRow(`${b.from_km}-${b.to_km} km`, b.objects, binMax)).join("")}
-        <p class="note">${escapeHTML(json.method)}</p>
-        <p class="note">Generated ${escapeHTML(fmtTime(json.generated_at))}</p>`;
+        <p class="note">${escapeHTML(json.method)}</p>`;
 }
 
 function renderHistory(json) {
@@ -1421,8 +1668,7 @@ function renderHistory(json) {
         <h3>OBJECTS BY DECADE</h3>
         ${Object.keys(byDecade).sort().map(d => barRow(d + "s", byDecade[d], max)).join("")}
         <h3>MOST RECENT YEARS</h3>
-        ${recent.map(y => kv(String(y.year), `${y.objects.toLocaleString()} objects, ${y.payloads.toLocaleString()} payloads`)).join("")}
-        <p class="note">${escapeHTML(json.method)}</p>`;
+        ${recent.map(y => kv(String(y.year), `${y.objects.toLocaleString()} objects, ${y.payloads.toLocaleString()} payloads`)).join("")}`;
 }
 
 function renderIntelligence(json) {
@@ -1439,42 +1685,36 @@ function renderIntelligence(json) {
            ${kv("Status", json.label)}
            ${kv("Obtained", fmtTime(json.data_obtained_at) + " (" + fmtAge(json.age_minutes) + ")")}
            ${kv("Objects listed", fmtNum(json.count))}
-           <p class="note">Click ☀️ SUN + ASTEROIDS to view the heliocentric orbits around the Sun.</p>`;
+           <p class="note">Click SUN + ASTEROIDS to view heliocentric orbits around the Sun.</p>`;
 
     return `
         <h3>EARTH OBSERVATION</h3>
-        ${kv("Globe imagery", document.getElementById("imageryStatus").textContent)}
+        ${kv("Globe imagery", imageryStatusText)}
         ${satPart}
         <h3>ASTEROID LAYER (HELIOCENTRIC)</h3>
         ${astPart}`;
 }
 
-// ==========================================
-// 7. OBJECT CATALOG
-// ==========================================
 
+// ============================================================================
+// 9. OBJECT CATALOG SEARCH & SATELLITE LIVE REFRESH
+// ============================================================================
 function renderCatalog(query = "") {
     const list = document.getElementById("satelliteList");
     const info = document.getElementById("catalogInfo");
-
     const q = query.trim().toLowerCase();
 
-    const filtered = currentSatellites.filter(sat => {
-        return (
-            String(sat.name).toLowerCase().includes(q) ||
-            String(sat.norad_id).includes(q) ||
-            String(sat.category).toLowerCase().includes(q)
-        );
-    });
+    const filtered = currentSatellites.filter(sat => (
+        String(sat.name).toLowerCase().includes(q) ||
+        String(sat.norad_id).includes(q) ||
+        String(sat.category).toLowerCase().includes(q)
+    ));
 
-    const visible = filtered.slice(0, 120);
-
-    info.textContent =
-        `${filtered.length} matching objects. Showing ${visible.length}.`;
+    const visible = filtered.slice(0, 300);
+    info.textContent = `${filtered.length.toLocaleString()} matching objects. Showing ${visible.length}.`;
 
     if (visible.length === 0) {
-        list.innerHTML =
-            '<p class="note">No matching object found.</p>';
+        list.innerHTML = '<p class="note">No matching object found.</p>';
         return;
     }
 
@@ -1482,61 +1722,34 @@ function renderCatalog(query = "") {
         const id = satelliteKey(sat);
         const category = categoryInfo[sat.category] || categoryInfo.unknown;
         const active = selectedId === id ? "active" : "";
-
         return `
-            <div class="sat ${active}"
-                 onclick="selectSatellite('${encodeURIComponent(id)}')">
-                <span class="category-symbol"
-                      style="color:${category.color}">
-                    ${category.symbol}
-                </span>
-                ${escapeHTML(sat.name)}
-                <span style="color:#7895aa">
-                    (${escapeHTML(id)})
-                </span>
-            </div>
-        `;
+            <div class="sat ${active}" onclick="selectSatellite('${encodeURIComponent(id)}')">
+                <span class="dot-indicator" style="background:${category.color};box-shadow:0 0 6px ${category.color};"></span>
+                <span>${escapeHTML(sat.name)} <span style="color:#64748b;font-family:var(--font-mono)">(${escapeHTML(id)})</span></span>
+            </div>`;
     }).join("");
 }
 
-document.getElementById("satelliteSearch")
-    .addEventListener("input", function() {
-        renderCatalog(this.value);
-    });
-
-
-// ==========================================
-// 8. OBJECT DATA UPDATE
-// ==========================================
+document.getElementById("satelliteSearch").addEventListener("input", function() {
+    renderCatalog(this.value);
+});
 
 let updateInProgress = false;
 
 async function updateSatellites() {
     if (updateInProgress) return;
-
     updateInProgress = true;
-
     const status = document.getElementById("status");
 
     try {
-        const response = await fetch(
-            "/api/satellites",
-            { cache: "no-store" }
-        );
-
-        if (!response.ok) {
-            throw new Error("API HTTP " + response.status);
-        }
+        const response = await fetch("/api/satellites", { cache: "no-store" });
+        if (!response.ok) throw new Error("API HTTP " + response.status);
 
         const result = await response.json();
-
-        if (!result.success) {
-            throw new Error(result.error);
-        }
+        if (!result.success) throw new Error(result.error);
 
         currentSatellites = result.satellites;
         lastSatelliteResult = result;
-
         const activeIds = new Set();
 
         for (const sat of currentSatellites) {
@@ -1544,41 +1757,36 @@ async function updateSatellites() {
             activeIds.add(id);
 
             const position = Cesium.Cartesian3.fromDegrees(
-                sat.longitude,
-                sat.latitude,
-                sat.altitude_km * 1000
+                sat.longitude, sat.latitude, sat.altitude_km * 1000
             );
-
             const selected = selectedId === id;
-
+            const catMeta = categoryInfo[sat.category] || categoryInfo.unknown;
+            const baseSize = selected ? 38 : catMeta.size;
             let billboard = objectBillboardMap.get(id);
-
-            const image = makeSymbolImage(
-                sat.category,
-                selected
-            );
+            const image = makeSymbolImage(sat.category, selected);
 
             if (!billboard) {
                 billboard = objectBillboards.add({
                     position: position,
                     image: image,
-                    width: selected ? 29 : 23,
-                    height: selected ? 29 : 23,
+                    width: baseSize,
+                    height: baseSize,
+                    scaleByDistance: SATELLITE_SCALE_BY_DIST,
                     verticalOrigin: Cesium.VerticalOrigin.CENTER,
+                    show: (activeCategoryFilter === "all" || sat.category === activeCategoryFilter),
                     id: sat
                 });
-
                 objectBillboardMap.set(id, billboard);
-
             } else {
                 billboard.position = position;
                 billboard.image = image;
-                billboard.width = selected ? 29 : 23;
-                billboard.height = selected ? 29 : 23;
+                billboard.width = baseSize;
+                billboard.height = baseSize;
+                billboard.show = (activeCategoryFilter === "all" || sat.category === activeCategoryFilter);
                 billboard.id = sat;
             }
 
-            if (selected) {
+            if (selected && activeViewMode === "earth") {
                 selectedLabel.position = position;
                 selectedLabel.label.text = sat.name;
                 selectedLabel.label.show = true;
@@ -1595,195 +1803,135 @@ async function updateSatellites() {
         if (selectedId && !String(selectedId).startsWith("AST-") && !activeIds.has(selectedId)) {
             selectedId = null;
             selectedLabel.label.show = false;
-            document.getElementById("details").style.display = "none";
+            closeObjectPopup();
         }
 
-        document.getElementById("count").textContent =
-            currentSatellites.length.toLocaleString();
-
-        renderCatalog(
-            document.getElementById("satelliteSearch").value
-        );
-
+        document.getElementById("count").textContent = currentSatellites.length.toLocaleString();
+        renderCatalog(document.getElementById("satelliteSearch").value);
         renderCategoryStats();
-
         renderDataQuality(result.data_quality);
 
-        status.textContent =
-            `CONNECTED // ${result.source} // positions ${fmtTime(result.position_updated)}`;
-
-        const feedLines = Object.entries(result.feeds || {})
-            .map(([g, i]) => `${g}: ${i.label}`).join("<br>");
-        document.getElementById("dataSourceInfo").innerHTML =
-            `Metadata: ${escapeHTML((result.metadata || {}).label || "Unavailable")}<br>` +
-            `${feedLines}<br>` +
-            `Position calculation: Skyfield<br>Refresh interval: 20 seconds<br>` +
-            `Calculated positions, not radar observations.`;
-
+        status.textContent = `ONLINE // ${result.source}`;
         viewer.scene.requestRender();
 
     } catch (error) {
         status.textContent = "DATA ERROR: " + error.message;
         console.error("Satellite API error:", error);
         renderDataQualityError(error.message);
-
     } finally {
         updateInProgress = false;
     }
 }
 
 
-// ==========================================
-// 9. SELECT OBJECT
-// ==========================================
-
+// ============================================================================
+// 10. SATELLITE SELECTION (Pop-Up + 3D Orbit Track + Camera Fly-To)
+// ============================================================================
 function selectSatellite(encodedId) {
     const id = decodeURIComponent(encodedId);
-
-    const sat = currentSatellites.find(
-        item => satelliteKey(item) === id
-    );
-
+    const sat = currentSatellites.find(item => satelliteKey(item) === id);
     if (!sat) return;
+
+    if (activeViewMode !== "earth") {
+        showEarthMode();
+    }
 
     selectedId = id;
 
-    for (const [, item] of asteroidBillboardMap) {
-        item.billboard.image = makeSymbolImage("asteroid", false);
-        item.billboard.width = 24;
-        item.billboard.height = 24;
-    }
-
     for (const [key, billboard] of objectBillboardMap) {
-        const object = currentSatellites.find(
-            item => satelliteKey(item) === key
-        );
-
+        const object = currentSatellites.find(item => satelliteKey(item) === key);
         if (!object) continue;
-
-        billboard.image = makeSymbolImage(
-            object.category,
-            key === id
-        );
-
-        billboard.width = key === id ? 29 : 23;
-        billboard.height = key === id ? 29 : 23;
+        const catMeta = categoryInfo[object.category] || categoryInfo.unknown;
+        const isSel = (key === id);
+        billboard.image = makeSymbolImage(object.category, isSel);
+        billboard.width = isSel ? 38 : catMeta.size;
+        billboard.height = isSel ? 38 : catMeta.size;
     }
 
     const position = Cesium.Cartesian3.fromDegrees(
-        sat.longitude,
-        sat.latitude,
-        sat.altitude_km * 1000
+        sat.longitude, sat.latitude, sat.altitude_km * 1000
     );
 
     selectedLabel.position = position;
     selectedLabel.label.text = sat.name;
     selectedLabel.label.show = true;
 
-    const category =
-        categoryInfo[sat.category] || categoryInfo.unknown;
+    drawSelectedSatelliteOrbit(sat);
+    viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(
+            sat.longitude,
+            sat.latitude,
+            Math.max(9000000, (sat.altitude_km + 9500) * 1000)
+        ),
+        duration: 1.1
+    });
 
-    const details = document.getElementById("details");
+    const category = categoryInfo[sat.category] || categoryInfo.unknown;
+    const purpose = inferMissionPurpose(sat);
 
-    details.style.display = "block";
-
-    details.innerHTML = `
-        <strong style="color:${category.color}">
-            ${escapeHTML(sat.name)}
+    const titleHtml = `
+        <strong style="color:${category.color};font-size:14px;">
+            ${category.symbol} ${escapeHTML(sat.name)}
         </strong>
-
-        <br><b>Category:</b> ${category.label}
-        <br><b>NORAD ID:</b> ${escapeHTML(id)}
-        <br><b>Object type:</b> ${escapeHTML(sat.object_type)}
-        <br><b>Owner:</b> ${escapeHTML(sat.owner)}
-        <br><b>Launch date:</b> ${escapeHTML(sat.launch_date)}
-        <br><b>Launch vehicle:</b> ${escapeHTML(sat.launch_vehicle || "Unavailable in current metadata")}
-        <br><b>Mission / purpose:</b> ${escapeHTML(sat.mission_purpose || "Unavailable in current metadata")}
-        <br><b>Operational status:</b>
-            ${escapeHTML(sat.operational_status)}
-
-        <div class="panel-divider"></div>
-
-        <b>POSITION</b>
-        <br>Latitude: ${sat.latitude}°
-        <br>Longitude: ${sat.longitude}°
-        <br>Altitude: ${sat.altitude_km} km
-
-        <div class="panel-divider"></div>
-
-        <b>ORBITAL DATA</b>
-        <br>Speed: ${sat.speed_kms} km/s
-        <br>Inclination: ${fmtUnit(sat.inclination_deg, "°")}
-        <br>Period: ${fmtUnit(sat.period_min, " minutes")}
-        <br>Apogee: ${fmtUnit(sat.apogee_km, " km")}
-        <br>Perigee: ${fmtUnit(sat.perigee_km, " km")}
-
-        <div class="panel-divider"></div>
-
-        <span class="note">
-            Source group: ${escapeHTML(sat.source_group)}
-            <br>Position: Calculated from public orbital elements.
-        </span>
+        <div style="font-size:10px;color:#94a3b8;margin-top:2px;">
+            ${category.label.toUpperCase()} • NORAD ID: ${escapeHTML(id)}
+        </div>
     `;
 
-    renderCatalog(
-        document.getElementById("satelliteSearch").value
-    );
+    const bodyHtml = `
+        <div class="purpose-badge">
+            <span>MISSION & PURPOSE</span>
+            ${escapeHTML(purpose)}
+        </div>
+        ${kv("Owner / Country", sat.owner)}
+        ${kv("Operational Status", sat.operational_status)}
+        ${kv("Launch Date", sat.launch_date)}
+        ${kv("Altitude", sat.altitude_km + " km")}
+        ${kv("Orbital Speed", sat.speed_kms + " km/s")}
+        ${kv("Coordinates", `${sat.latitude}°, ${sat.longitude}°`)}
+        ${kv("Inclination", fmtUnit(sat.inclination_deg, "°"))}
+        ${kv("Orbital Period", fmtUnit(sat.period_min, " min"))}
+    `;
 
+    openObjectPopup(titleHtml, bodyHtml);
+    renderCatalog(document.getElementById("satelliteSearch").value);
     viewer.scene.requestRender();
 }
 
-
-// ==========================================
-// 10. CLICK OBJECT OR ASTEROID ON GLOBE
-// ==========================================
-
-const clickHandler =
-    new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
-
+const clickHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
 clickHandler.setInputAction(function(movement) {
     const picked = viewer.scene.pick(movement.position);
-
     if (Cesium.defined(picked) && picked.id) {
         if (picked.id._isAsteroid && picked.id._astId) {
             selectAsteroid(picked.id._astId);
         } else if (picked.id.norad_id) {
-            selectSatellite(
-                encodeURIComponent(String(picked.id.norad_id))
-            );
+            selectSatellite(encodeURIComponent(String(picked.id.norad_id)));
         }
     }
 }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
 
-// ==========================================
-// 11. APPLICATION STARTUP
-// ==========================================
-
+// ============================================================================
+// 11. APPLICATION STARTUP SEQUENCE
+// ============================================================================
 async function startApplication() {
     const status = document.getElementById("status");
-
     try {
         status.textContent = "INITIALIZING EARTH...";
-
         await loadEarthImagery();
 
         await new Promise(resolve => {
-            requestAnimationFrame(() => {
-                requestAnimationFrame(resolve);
-            });
+            requestAnimationFrame(() => requestAnimationFrame(resolve));
         });
 
         viewer.resize();
-        resetCamera();
+        showEarthMode();
 
-        status.textContent = "EARTH READY // CONNECTING TO DATA...";
-
+        status.textContent = "CONNECTING TELEMETRY...";
         await updateSatellites();
         await prefetchAsteroids();
 
         setInterval(updateSatellites, 20000);
-
     } catch (error) {
         status.textContent = "STARTUP ERROR: " + error.message;
         console.error(error);
@@ -1791,7 +1939,6 @@ async function startApplication() {
 }
 
 startApplication();
-
 </script>
 </body>
 </html>
