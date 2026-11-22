@@ -88,9 +88,25 @@ header {
     width: 8px;
     height: 8px;
     border-radius: 50%;
+    background: var(--text-muted);
+    box-shadow: 0 0 7px var(--text-muted);
+    animation: pulseGlow 2s infinite;
+}
+
+.live-dot.status-live {
     background: var(--accent-emerald);
     box-shadow: 0 0 10px var(--accent-emerald);
-    animation: pulseGlow 2s infinite;
+}
+
+.live-dot.status-backup,
+.live-dot.status-degraded {
+    background: var(--accent-amber);
+    box-shadow: 0 0 10px var(--accent-amber);
+}
+
+.live-dot.status-error {
+    background: var(--accent-rose);
+    box-shadow: 0 0 10px var(--accent-rose);
 }
 
 @keyframes pulseGlow {
@@ -793,7 +809,7 @@ button:hover {
 <!-- TOP COMMAND HEADER -->
 <header>
   <div class="brand-title">
-    <span class="live-dot"></span>
+    <span class="live-dot" id="telemetryIndicator" aria-label="Telemetry status"></span>
     <span>COSMO-DEFENSE</span>
     <div class="utc-clock" id="utcClock">--:--:-- UTC</div>
   </div>
@@ -1754,7 +1770,9 @@ function describeSource(info) {
     }
     const flag = info.status === "local_backup" ? "BACKUP - NOT LIVE: " : "";
     const epoch = info.tle_epoch_newest ? `; newest TLE epoch ${fmtTime(info.tle_epoch_newest)}` : "";
-    return `${flag}${info.label}, obtained ${fmtTime(info.data_obtained_at)} (${fmtAge(info.age_minutes)})${epoch}`;
+    const attempted = info.last_attempt ? `; last checked ${fmtTime(info.last_attempt)}` : "";
+    const error = info.last_error ? `; refresh failed: ${info.last_error}` : "";
+    return `${flag}${info.label}, obtained ${fmtTime(info.data_obtained_at)} (${fmtAge(info.age_minutes)})${epoch}${attempted}${error}`;
 }
 
 function kv(label, value) {
@@ -1784,6 +1802,7 @@ function renderDataQuality(data) {
         typeof data.metadata_match_percent === "number" ? `${data.metadata_match_percent}%` : "DATA UNAVAILABLE";
 
     const failed = data.failed_positions || [];
+    const malformed = data.malformed_records || [];
     const feedRecords = Object.entries(data.records_by_feed || {})
         .map(([g, n]) => `${g}: ${n.toLocaleString()}`).join(", ");
 
@@ -1800,6 +1819,9 @@ function renderDataQuality(data) {
         ${kv("Owner: blank in metadata", fmtNum(data.owner_blank_in_metadata))}
         ${failed.length ? `<div class="fail-list"><b>Position failures:</b><br>${
             failed.map(f => `${escapeHTML(f.name)} [${escapeHTML(f.norad_id)}]: ${escapeHTML(f.reason)}`).join("<br>")
+        }</div>` : ""}
+        ${malformed.length ? `<div class="fail-list"><b>Rejected TLE records (first ${malformed.length}):</b><br>${
+            malformed.map(f => `${escapeHTML(f.name)} [${escapeHTML(f.norad_id)}]: ${escapeHTML(f.reason)}`).join("<br>")
         }</div>` : ""}
     `;
 
@@ -2106,9 +2128,15 @@ async function updateSatellites() {
     if (updateInProgress) return;
     updateInProgress = true;
     const status = document.getElementById("status");
+    const indicator = document.getElementById("telemetryIndicator");
+    const requestController = new AbortController();
+    const requestTimeout = setTimeout(() => requestController.abort(), 90000);
 
     try {
-        const response = await fetch("/api/satellites", { cache: "no-store" });
+        const response = await fetch("/api/satellites", {
+            cache: "no-store",
+            signal: requestController.signal
+        });
         if (!response.ok) throw new Error("API HTTP " + response.status);
 
         const result = await response.json();
@@ -2177,14 +2205,25 @@ async function updateSatellites() {
         renderCategoryStats();
         renderDataQuality(result.data_quality);
 
-        status.textContent = `ONLINE // ${result.source}`;
+        const ageSuffix = typeof result.max_source_age_minutes === "number"
+            ? ` // oldest source ${fmtAge(result.max_source_age_minutes)}`
+            : "";
+        status.textContent = `${result.source}${ageSuffix}`;
+        indicator.classList.remove("status-live", "status-backup", "status-degraded", "status-error");
+        indicator.classList.add(`status-${result.source_status || "error"}`);
         viewer.scene.requestRender();
 
     } catch (error) {
-        status.textContent = "DATA ERROR: " + error.message;
+        const message = error.name === "AbortError"
+            ? "API request timed out after 90 seconds"
+            : error.message;
+        status.textContent = "DATA ERROR: " + message;
+        indicator.classList.remove("status-live", "status-backup", "status-degraded");
+        indicator.classList.add("status-error");
         console.error("Satellite API error:", error);
-        renderDataQualityError(error.message);
+        renderDataQualityError(message);
     } finally {
+        clearTimeout(requestTimeout);
         updateInProgress = false;
     }
 }
@@ -2297,7 +2336,8 @@ async function startApplication() {
             viewer.scene.requestRender();
         }, 250);
 
-        status.textContent = "CONNECTING TELEMETRY...";
+        status.textContent = "CONNECTING TELEMETRY... (up to 90 seconds)";
+        document.getElementById("telemetryIndicator").classList.add("status-degraded");
         await updateSatellites();
         await prefetchAsteroids();
 

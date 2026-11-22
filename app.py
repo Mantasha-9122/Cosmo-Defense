@@ -152,6 +152,15 @@ def validate_tle(line1, line2):
     if not (line1[68].isdigit() and line2[68].isdigit()):
         return "missing checksum digit"
 
+    # TLE line 2 eccentricity is stored without a decimal point in columns 27-33.
+    # Reject physically unusable values before they reach Skyfield/SGP4.
+    eccentricity_field = line2[26:33]
+    if not eccentricity_field.isdigit():
+        return "invalid mean eccentricity field"
+    eccentricity = float(f"0.{eccentricity_field}")
+    if not 0 <= eccentricity < 1:
+        return "mean eccentricity is outside the valid range [0, 1)"
+
     if tle_checksum(line1) != int(line1[68]):
         return "line 1 checksum mismatch"
 
@@ -1047,6 +1056,7 @@ def satellites():
                 "unique_by_feed": catalog["unique_by_group"],
                 "duplicate_ids_across_feeds": len(catalog["overlapping_ids"]),
                 "malformed_records_rejected": len(catalog["malformed"]),
+                "malformed_records": catalog["malformed"][:50],
                 "unique_valid_objects": unique_objects,
                 "positions_not_calculated": len(failures),
                 "failed_positions": failures[:100],
@@ -1061,20 +1071,32 @@ def satellites():
                 "metadata": metadata_info,
             }
 
-            overall_statuses = {
-                info.get("status") for info in feed_info.values()
-            } | {metadata_info.get("status")}
+            source_infos = list(feed_info.values()) + [metadata_info]
+            overall_statuses = {info.get("status") for info in source_infos}
+            ages = [
+                info.get("age_minutes") for info in source_infos
+                if isinstance(info.get("age_minutes"), (int, float))
+            ]
+            max_source_age_minutes = max(ages) if ages else None
 
             if overall_statuses <= {"live", "cached"}:
-                source_summary = "CelesTrak GP + SATCAT (live data)"
+                source_status = "live"
+                source_summary = "LIVE DATA"
+            elif overall_statuses == {"local_backup"}:
+                source_status = "backup"
+                source_summary = "BACKUP DATA"
             elif overall_statuses & {"local_backup", "unavailable"}:
-                source_summary = "CelesTrak GP + SATCAT (Hybrid: Live + Backup)"
+                source_status = "degraded"
+                source_summary = "MIXED / DEGRADED DATA"
             else:
-                source_summary = "CelesTrak GP + SATCAT"
+                source_status = "unavailable"
+                source_summary = "DATA UNAVAILABLE"
 
             result = {
                 "success": True,
                 "source": source_summary,
+                "source_status": source_status,
+                "max_source_age_minutes": max_source_age_minutes,
                 "tle_sources": feed_sources,
                 "metadata_source": metadata_info.get("label", "Unavailable"),
                 "feeds": feed_info,
